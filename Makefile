@@ -5,9 +5,8 @@ help: ## Show the help
 .PHONY: it
 it: build build-tests ## Initialize the development environment
 
-GOLANG_VERSION=1.23
-DOCKER_REGISTRY=ghcr.io/fulll
-DOCKER_REPOSITORY=gotenberg
+GOLANG_VERSION=1.22
+DOCKER_REPOSITORY=ghcr.io/fulll/gotenberg
 GOTENBERG_VERSION=snapshot
 GOTENBERG_USER_GID=1001
 GOTENBERG_USER_UID=1001

@@ -25,7 +25,8 @@ jobs:
         env:
           LINUX_AMD64_RELEASE: "true"
         run: |
-          make release CHROME_VERSION=127.0.6533.119-1 GOTENBERG_VERSION=${{ github.event.release.tag_name }} DOCKER_REGISTRY=ghcr.io/fulll DOCKER_REPOSITORY=gotenberg
+          make release GOTENBERG_VERSION=${{ github.event.release.tag_name }}
+          make release GOTENBERG_VERSION=${{ github.event.release.tag_name }} DOCKER_REPOSITORY=ghcr.io/fulll/gotenberg
 
       - name: generate aws credentials config
         env:
