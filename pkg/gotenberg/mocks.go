@@ -36,6 +36,7 @@ func (mod *ValidatorMock) Validate() error {
 // PdfEngineMock is a mock for the [PdfEngine] interface.
 type PdfEngineMock struct {
 	MergeMock         func(ctx context.Context, logger *zap.Logger, inputPaths []string, outputPath string) error
+	OptimizeMock      func(ctx context.Context, logger *zap.Logger, inputPath, outputPath string) error
 	ConvertMock       func(ctx context.Context, logger *zap.Logger, formats PdfFormats, inputPath, outputPath string) error
 	ReadMetadataMock  func(ctx context.Context, logger *zap.Logger, inputPath string) (map[string]interface{}, error)
 	WriteMetadataMock func(ctx context.Context, logger *zap.Logger, metadata map[string]interface{}, inputPath string) error
@@ -43,6 +44,10 @@ type PdfEngineMock struct {
 
 func (engine *PdfEngineMock) Merge(ctx context.Context, logger *zap.Logger, inputPaths []string, outputPath string) error {
 	return engine.MergeMock(ctx, logger, inputPaths, outputPath)
+}
+
+func (engine *PdfEngineMock) Optimize(ctx context.Context, logger *zap.Logger, inputPath, outputPath string) error {
+	return engine.OptimizeMock(ctx, logger, inputPath, outputPath)
 }
 
 func (engine *PdfEngineMock) Convert(ctx context.Context, logger *zap.Logger, formats PdfFormats, inputPath, outputPath string) error {

@@ -217,6 +217,10 @@ type PdfOptions struct {
 	// GenerateDocumentOutline defines whether the document outline should be
 	// embedded into the PDF.
 	GenerateDocumentOutline bool
+
+	// GenerateTaggedPDF defines whether the document tags should be
+	// embedded into the PDF.
+	GenerateTaggedPDF bool
 }
 
 // DefaultPdfOptions returns the default values for PdfOptions.
@@ -238,6 +242,7 @@ func DefaultPdfOptions() PdfOptions {
 		FooterTemplate:          "<html><head></head><body></body></html>",
 		PreferCssPageSize:       false,
 		GenerateDocumentOutline: false,
+		GenerateTaggedPDF:       true,
 	}
 }
 

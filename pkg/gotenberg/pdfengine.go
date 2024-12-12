@@ -65,6 +65,9 @@ type PdfEngine interface {
 	// is determined by the order of files provided in inputPaths.
 	Merge(ctx context.Context, logger *zap.Logger, inputPaths []string, outputPath string) error
 
+	// Optimize optimizes a given PDF.
+	Optimize(ctx context.Context, logger *zap.Logger, inputPaths, outputPath string) error
+
 	// Convert transforms a given PDF to the specified formats defined in
 	// PdfFormats. If no format, it does nothing.
 	Convert(ctx context.Context, logger *zap.Logger, formats PdfFormats, inputPath, outputPath string) error

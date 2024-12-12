@@ -58,6 +58,11 @@ func (engine *ExifTool) Merge(ctx context.Context, logger *zap.Logger, inputPath
 	return fmt.Errorf("merge PDFs with ExifTool: %w", gotenberg.ErrPdfEngineMethodNotSupported)
 }
 
+// Optimize is not available in this implementation.
+func (engine *ExifTool) Optimize(ctx context.Context, logger *zap.Logger, inputPath, outputPath string) error {
+	return fmt.Errorf("optimize PDF with PDFtk: %w", gotenberg.ErrPdfEngineMethodNotSupported)
+}
+
 // Convert is not available in this implementation.
 func (engine *ExifTool) Convert(ctx context.Context, logger *zap.Logger, formats gotenberg.PdfFormats, inputPath, outputPath string) error {
 	return fmt.Errorf("convert PDF to '%+v' with ExifTool: %w", formats, gotenberg.ErrPdfEngineMethodNotSupported)

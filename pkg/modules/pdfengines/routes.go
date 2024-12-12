@@ -66,6 +66,18 @@ func MergeStub(ctx *api.Context, engine gotenberg.PdfEngine, inputPaths []string
 	return outputPath, nil
 }
 
+// OptimizeStub optimizes a given PDF.
+// If no format, it does nothing and returns the input paths.
+func OptimizeStub(ctx *api.Context, engine gotenberg.PdfEngine, inputPath string) (string, error) {
+	outputPath := inputPath
+	err := engine.Optimize(ctx, ctx.Log(), inputPath, outputPath)
+	if err != nil {
+		return "", fmt.Errorf("optimize '%s': %w", inputPath, err)
+	}
+
+	return outputPath, nil
+}
+
 // ConvertStub transforms a given PDF to the specified formats defined in
 // [gotenberg.PdfFormats]. If no format, it does nothing and returns the input
 // paths.

@@ -199,6 +199,10 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 	form, options := FormDataChromiumOptions(ctx)
 	defaultPdfOptions := DefaultPdfOptions()
 
+	fmt.Println("FormDataChromiumPdfOptions - form -", form)
+	fmt.Println("FormDataChromiumPdfOptions - options -", options)
+	fmt.Println("FormDataChromiumPdfOptions - defaultPdfOptions -", defaultPdfOptions)
+
 	var (
 		landscape, printBackground, singlePage           bool
 		scale, paperWidth, paperHeight                   float64
@@ -207,6 +211,7 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 		headerTemplate, footerTemplate                   string
 		preferCssPageSize                                bool
 		generateDocumentOutline                          bool
+		generateTaggedPDF                                bool
 	)
 
 	form.
@@ -224,7 +229,8 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 		Content("header.html", &headerTemplate, defaultPdfOptions.HeaderTemplate).
 		Content("footer.html", &footerTemplate, defaultPdfOptions.FooterTemplate).
 		Bool("preferCssPageSize", &preferCssPageSize, defaultPdfOptions.PreferCssPageSize).
-		Bool("generateDocumentOutline", &generateDocumentOutline, defaultPdfOptions.GenerateDocumentOutline)
+		Bool("generateDocumentOutline", &generateDocumentOutline, defaultPdfOptions.GenerateDocumentOutline).
+		Bool("generateTaggedPDF", &generateTaggedPDF, defaultPdfOptions.GenerateTaggedPDF)
 
 	pdfOptions := PdfOptions{
 		Options:                 options,
@@ -243,7 +249,11 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 		FooterTemplate:          footerTemplate,
 		PreferCssPageSize:       preferCssPageSize,
 		GenerateDocumentOutline: generateDocumentOutline,
+		GenerateTaggedPDF:       generateTaggedPDF,
 	}
+
+	fmt.Println("FormDataChromiumPdfOptions - generateTaggedPDF -", generateTaggedPDF)
+	fmt.Println("FormDataChromiumPdfOptions - pdfOptions -", pdfOptions)
 
 	return form, pdfOptions
 }
@@ -630,6 +640,15 @@ func convertUrl(ctx *api.Context, chromium Api, engine gotenberg.PdfEngine, url 
 		}
 
 		return fmt.Errorf("convert to PDF: %w", err)
+	}
+
+	if !options.GenerateTaggedPDF {
+		fmt.Println("optimize PDF before - outputpath : ", outputPath)
+		outputPath, err = pdfengines.OptimizeStub(ctx, engine, outputPath)
+		if err != nil {
+			return fmt.Errorf("optimize PDF: %w", err)
+		}
+		fmt.Println("optimize PDF after - outputpath ", outputPath)
 	}
 
 	outputPaths, err := pdfengines.ConvertStub(ctx, engine, pdfFormats, []string{outputPath})

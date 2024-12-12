@@ -13,6 +13,7 @@ import (
 
 type multiPdfEngines struct {
 	mergeEngines       []gotenberg.PdfEngine
+	optimizeEngines    []gotenberg.PdfEngine
 	convertEngines     []gotenberg.PdfEngine
 	readMedataEngines  []gotenberg.PdfEngine
 	writeMedataEngines []gotenberg.PdfEngine
@@ -20,12 +21,14 @@ type multiPdfEngines struct {
 
 func newMultiPdfEngines(
 	mergeEngines,
+	optimizeEngines,
 	convertEngines,
 	readMetadataEngines,
 	writeMedataEngines []gotenberg.PdfEngine,
 ) *multiPdfEngines {
 	return &multiPdfEngines{
 		mergeEngines:       mergeEngines,
+		optimizeEngines:    optimizeEngines,
 		convertEngines:     convertEngines,
 		readMedataEngines:  readMetadataEngines,
 		writeMedataEngines: writeMedataEngines,
@@ -55,6 +58,31 @@ func (multi *multiPdfEngines) Merge(ctx context.Context, logger *zap.Logger, inp
 	}
 
 	return fmt.Errorf("merge PDFs with multi PDF engines: %w", err)
+}
+
+// Optimize tries to optimize the given PDF.
+// If the context is done, it stops and returns an error.
+func (multi *multiPdfEngines) Optimize(ctx context.Context, logger *zap.Logger, inputPath, outputPath string) error {
+	var err error
+	errChan := make(chan error, 1)
+
+	for _, engine := range multi.mergeEngines {
+		go func(engine gotenberg.PdfEngine) {
+			errChan <- engine.Optimize(ctx, logger, inputPath, outputPath)
+		}(engine)
+
+		select {
+		case mergeErr := <-errChan:
+			errored := multierr.AppendInto(&err, mergeErr)
+			if !errored {
+				return nil
+			}
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
+	return fmt.Errorf("optimize PDFs with multi PDF engines: %w", err)
 }
 
 // Convert converts the given PDF to a specific PDF format. thanks to its

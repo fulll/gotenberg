@@ -72,6 +72,11 @@ func (engine *QPdf) Merge(ctx context.Context, logger *zap.Logger, inputPaths []
 	return fmt.Errorf("merge PDFs with QPDF: %w", err)
 }
 
+// Optimize is not available in this implementation.
+func (engine *QPdf) Optimize(ctx context.Context, logger *zap.Logger, inputPath, outputPath string) error {
+	return fmt.Errorf("optimize PDF with QPDF: %w", gotenberg.ErrPdfEngineMethodNotSupported)
+}
+
 // Convert is not available in this implementation.
 func (engine *QPdf) Convert(ctx context.Context, logger *zap.Logger, formats gotenberg.PdfFormats, inputPath, outputPath string) error {
 	return fmt.Errorf("convert PDF to '%+v' with QPDF: %w", formats, gotenberg.ErrPdfEngineMethodNotSupported)

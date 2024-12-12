@@ -51,6 +51,11 @@ func (engine *LibreOfficePdfEngine) Merge(ctx context.Context, logger *zap.Logge
 	return fmt.Errorf("merge PDFs with LibreOffice: %w", gotenberg.ErrPdfEngineMethodNotSupported)
 }
 
+// Optimize is not available in this implementation.
+func (engine *LibreOfficePdfEngine) Optimize(ctx context.Context, logger *zap.Logger, inputPath, outputPath string) error {
+	return fmt.Errorf("optimize PDF with LibreOffice: %w", gotenberg.ErrPdfEngineMethodNotSupported)
+}
+
 // Convert converts the given PDF to a specific PDF format. Currently, only the
 // PDF/A-1b, PDF/A-2b, PDF/A-3b and PDF/UA formats are available. If another
 // PDF format is requested, it returns a [gotenberg.ErrPdfFormatNotSupported]

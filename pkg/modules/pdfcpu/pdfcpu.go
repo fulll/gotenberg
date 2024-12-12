@@ -70,6 +70,26 @@ func (engine *PdfCpu) Merge(ctx context.Context, logger *zap.Logger, inputPaths 
 	return fmt.Errorf("merge PDFs with pdfcpu: %w", err)
 }
 
+// Optimize a PDF.
+func (engine *PdfCpu) Optimize(ctx context.Context, logger *zap.Logger, inputPath, outputPath string) error {
+	var args []string
+	args = append(args, "optimize", inputPath)
+	args = append(args, outputPath)
+
+	cmd, err := gotenberg.CommandContext(ctx, logger, engine.binPath, args...)
+	if err != nil {
+		return fmt.Errorf("create command: %w", err)
+	}
+
+	_, err = cmd.Exec()
+	if err == nil {
+		fmt.Println("Optimize - No error")
+		return nil
+	}
+
+	return fmt.Errorf("optimize PDFs with pdfcpu: %w", err)
+}
+
 // Convert is not available in this implementation.
 func (engine *PdfCpu) Convert(ctx context.Context, logger *zap.Logger, formats gotenberg.PdfFormats, inputPath, outputPath string) error {
 	return fmt.Errorf("convert PDF to '%+v' with pdfcpu: %w", formats, gotenberg.ErrPdfEngineMethodNotSupported)

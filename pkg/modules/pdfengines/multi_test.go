@@ -30,6 +30,7 @@ func TestMultiPdfEngines_Merge(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				nil,
 			),
 			ctx:         context.Background(),
 			expectError: false,
@@ -49,6 +50,7 @@ func TestMultiPdfEngines_Merge(t *testing.T) {
 						},
 					},
 				},
+				nil,
 				nil,
 				nil,
 				nil,
@@ -74,6 +76,7 @@ func TestMultiPdfEngines_Merge(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				nil,
 			),
 			ctx:         context.Background(),
 			expectError: true,
@@ -88,6 +91,7 @@ func TestMultiPdfEngines_Merge(t *testing.T) {
 						},
 					},
 				},
+				nil,
 				nil,
 				nil,
 				nil,
@@ -126,6 +130,7 @@ func TestMultiPdfEngines_Convert(t *testing.T) {
 			scenario: "nominal behavior",
 			engine: newMultiPdfEngines(
 				nil,
+				nil,
 				[]gotenberg.PdfEngine{
 					&gotenberg.PdfEngineMock{
 						ConvertMock: func(ctx context.Context, logger *zap.Logger, formats gotenberg.PdfFormats, inputPath, outputPath string) error {
@@ -141,6 +146,7 @@ func TestMultiPdfEngines_Convert(t *testing.T) {
 		{
 			scenario: "at least one engine does not return an error",
 			engine: newMultiPdfEngines(
+				nil,
 				nil,
 				[]gotenberg.PdfEngine{
 					&gotenberg.PdfEngineMock{
@@ -163,6 +169,7 @@ func TestMultiPdfEngines_Convert(t *testing.T) {
 			scenario: "all engines return an error",
 			engine: newMultiPdfEngines(
 				nil,
+				nil,
 				[]gotenberg.PdfEngine{
 					&gotenberg.PdfEngineMock{
 						ConvertMock: func(ctx context.Context, logger *zap.Logger, formats gotenberg.PdfFormats, inputPath, outputPath string) error {
@@ -184,6 +191,7 @@ func TestMultiPdfEngines_Convert(t *testing.T) {
 		{
 			scenario: "context expired",
 			engine: newMultiPdfEngines(
+				nil,
 				nil,
 				[]gotenberg.PdfEngine{
 					&gotenberg.PdfEngineMock{
@@ -230,6 +238,7 @@ func TestMultiPdfEngines_ReadMetadata(t *testing.T) {
 			engine: newMultiPdfEngines(
 				nil,
 				nil,
+				nil,
 				[]gotenberg.PdfEngine{
 					&gotenberg.PdfEngineMock{
 						ReadMetadataMock: func(ctx context.Context, logger *zap.Logger, inputPath string) (map[string]interface{}, error) {
@@ -244,6 +253,7 @@ func TestMultiPdfEngines_ReadMetadata(t *testing.T) {
 		{
 			scenario: "at least one engine does not return an error",
 			engine: newMultiPdfEngines(
+				nil,
 				nil,
 				nil,
 				[]gotenberg.PdfEngine{
@@ -267,6 +277,7 @@ func TestMultiPdfEngines_ReadMetadata(t *testing.T) {
 			engine: newMultiPdfEngines(
 				nil,
 				nil,
+				nil,
 				[]gotenberg.PdfEngine{
 					&gotenberg.PdfEngineMock{
 						ReadMetadataMock: func(ctx context.Context, logger *zap.Logger, inputPath string) (map[string]interface{}, error) {
@@ -287,6 +298,7 @@ func TestMultiPdfEngines_ReadMetadata(t *testing.T) {
 		{
 			scenario: "context expired",
 			engine: newMultiPdfEngines(
+				nil,
 				nil,
 				nil,
 				[]gotenberg.PdfEngine{
@@ -334,6 +346,7 @@ func TestMultiPdfEngines_WriteMetadata(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				nil,
 				[]gotenberg.PdfEngine{
 					&gotenberg.PdfEngineMock{
 						WriteMetadataMock: func(ctx context.Context, logger *zap.Logger, metadata map[string]interface{}, inputPath string) error {
@@ -347,6 +360,7 @@ func TestMultiPdfEngines_WriteMetadata(t *testing.T) {
 		{
 			scenario: "at least one engine does not return an error",
 			engine: newMultiPdfEngines(
+				nil,
 				nil,
 				nil,
 				nil,
@@ -371,6 +385,7 @@ func TestMultiPdfEngines_WriteMetadata(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				nil,
 				[]gotenberg.PdfEngine{
 					&gotenberg.PdfEngineMock{
 						WriteMetadataMock: func(ctx context.Context, logger *zap.Logger, metadata map[string]interface{}, inputPath string) error {
@@ -390,6 +405,7 @@ func TestMultiPdfEngines_WriteMetadata(t *testing.T) {
 		{
 			scenario: "context expired",
 			engine: newMultiPdfEngines(
+				nil,
 				nil,
 				nil,
 				nil,
