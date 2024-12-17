@@ -230,7 +230,6 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 				err := json.Unmarshal([]byte(value), &bookmarks)
 				if err != nil {
 					fmt.Errorf("unmarshal bookmarks: %w", err)
-					return err
 				}
 			} else {
 				bookmarks = defaultPdfOptions.Bookmarks

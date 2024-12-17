@@ -114,11 +114,13 @@ func ImportBookmarksStub(ctx *api.Context, engine gotenberg.PdfEngine, inputPath
 	}
 
 	inputBookmarksPath := ctx.GeneratePath(".json")
-	os.WriteFile(inputBookmarksPath, inputBookmarks, 0o644)
-
-	err := engine.ImportBookmarks(ctx, ctx.Log(), inputPath, inputBookmarksPath, outputPath)
+	err := os.WriteFile(inputBookmarksPath, inputBookmarks, 0o644)
 	if err != nil {
-		return "", fmt.Errorf("optimize %v: %w", inputPath, err)
+		return "", fmt.Errorf("write file %v: %w", inputBookmarksPath, err)
+	}
+	err = engine.ImportBookmarks(ctx, ctx.Log(), inputPath, inputBookmarksPath, outputPath)
+	if err != nil {
+		return "", fmt.Errorf("import bookmarks %v: %w", inputPath, err)
 	}
 
 	return outputPath, nil

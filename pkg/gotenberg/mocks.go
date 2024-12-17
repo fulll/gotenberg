@@ -59,7 +59,7 @@ func (engine *PdfEngineMock) WriteMetadata(ctx context.Context, logger *zap.Logg
 }
 
 func (engine *PdfEngineMock) ImportBookmarks(ctx context.Context, logger *zap.Logger, inputPath, inputBookmarksPath, outputPath string) error {
-	return engine.ImportBookmarks(ctx, logger, inputPath, inputBookmarksPath, outputPath)
+	return engine.ImportBookmarksMock(ctx, logger, inputPath, inputBookmarksPath, outputPath)
 }
 
 // PdfEngineProviderMock is a mock for the [PdfEngineProvider] interface.
