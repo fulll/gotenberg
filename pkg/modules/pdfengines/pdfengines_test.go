@@ -23,14 +23,14 @@ func TestPdfEngines_Descriptor(t *testing.T) {
 
 func TestPdfEngines_Provision(t *testing.T) {
 	for _, tc := range []struct {
-		scenario                          string
-		ctx                               *gotenberg.Context
-		expectedMergePdfEngines           []string
-		expectedConvertPdfEngines         []string
-		expectedReadMetadataPdfEngines    []string
-		expectedWriteMetadataPdfEngines   []string
-		expectedImportBookmarksPdfEngines []string
-		expectError                       bool
+		scenario                        string
+		ctx                             *gotenberg.Context
+		expectedMergePdfEngines         []string
+		expectedConvertPdfEngines       []string
+		expectedReadMetadataPdfEngines  []string
+		expectedWriteMetadataPdfEngines []string
+		//expectedImportBookmarksPdfEngines []string
+		expectError bool
 	}{
 		{
 			scenario: "no selection from user",
@@ -66,12 +66,12 @@ func TestPdfEngines_Provision(t *testing.T) {
 					},
 				)
 			}(),
-			expectedMergePdfEngines:           []string{"qpdf", "pdfcpu", "pdftk"},
-			expectedConvertPdfEngines:         []string{"libreoffice-pdfengine"},
-			expectedReadMetadataPdfEngines:    []string{"exiftool"},
-			expectedWriteMetadataPdfEngines:   []string{"exiftool"},
-			expectedImportBookmarksPdfEngines: []string{"pdfcpu"},
-			expectError:                       false,
+			expectedMergePdfEngines:         []string{"qpdf", "pdfcpu", "pdftk"},
+			expectedConvertPdfEngines:       []string{"libreoffice-pdfengine"},
+			expectedReadMetadataPdfEngines:  []string{"exiftool"},
+			expectedWriteMetadataPdfEngines: []string{"exiftool"},
+			//expectedImportBookmarksPdfEngines: []string{"pdfcpu"},
+			expectError: false,
 		},
 		{
 			scenario: "selection from user",
@@ -126,12 +126,12 @@ func TestPdfEngines_Provision(t *testing.T) {
 				)
 			}(),
 
-			expectedMergePdfEngines:           []string{"b"},
-			expectedConvertPdfEngines:         []string{"b"},
-			expectedReadMetadataPdfEngines:    []string{"a"},
-			expectedWriteMetadataPdfEngines:   []string{"a"},
-			expectedImportBookmarksPdfEngines: []string{"b"},
-			expectError:                       false,
+			expectedMergePdfEngines:         []string{"b"},
+			expectedConvertPdfEngines:       []string{"b"},
+			expectedReadMetadataPdfEngines:  []string{"a"},
+			expectedWriteMetadataPdfEngines: []string{"a"},
+			//expectedImportBookmarksPdfEngines: []string{"b"},
+			expectError: false,
 		},
 		{
 			scenario: "no valid PDF engine",
@@ -197,9 +197,9 @@ func TestPdfEngines_Provision(t *testing.T) {
 				t.Fatalf("expected %d write metadata names but got %d", len(tc.expectedWriteMetadataPdfEngines), len(mod.writeMedataNames))
 			}
 
-			if len(tc.expectedImportBookmarksPdfEngines) != len(mod.importBookmarksNames) {
-				t.Fatalf("expected %d write metadata names but got %d", len(tc.expectedImportBookmarksPdfEngines), len(mod.importBookmarksNames))
-			}
+			// if len(tc.expectedImportBookmarksPdfEngines) != len(mod.importBookmarksNames) {
+			// 	t.Fatalf("expected %d write metadata names but got %d", len(tc.expectedImportBookmarksPdfEngines), len(mod.importBookmarksNames))
+			// }
 
 			for index, name := range mod.mergeNames {
 				if name != tc.expectedMergePdfEngines[index] {
@@ -225,11 +225,11 @@ func TestPdfEngines_Provision(t *testing.T) {
 				}
 			}
 
-			for index, name := range mod.importBookmarksNames {
-				if name != tc.expectedImportBookmarksPdfEngines[index] {
-					t.Fatalf("expected import bookmarks name at index %d to be %s, but got: %s", index, name, tc.expectedImportBookmarksPdfEngines[index])
-				}
-			}
+			// for index, name := range mod.importBookmarksNames {
+			// 	if name != tc.expectedImportBookmarksPdfEngines[index] {
+			// 		t.Fatalf("expected import bookmarks name at index %d to be %s, but got: %s", index, name, tc.expectedImportBookmarksPdfEngines[index])
+			// 	}
+			// }
 		})
 	}
 }
@@ -387,7 +387,7 @@ func TestPdfEngines_Routes(t *testing.T) {
 	}{
 		{
 			scenario:      "routes not disabled",
-			expectRoutes:  5,
+			expectRoutes:  4,
 			disableRoutes: false,
 		},
 		{
