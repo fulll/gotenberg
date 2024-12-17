@@ -114,7 +114,7 @@ func ImportBookmarksStub(ctx *api.Context, engine gotenberg.PdfEngine, inputPath
 	}
 
 	inputBookmarksPath := ctx.GeneratePath(".json")
-	err := os.WriteFile(inputBookmarksPath, inputBookmarks, 0o644)
+	err := os.WriteFile(inputBookmarksPath, inputBookmarks, 0o600)
 	if err != nil {
 		return "", fmt.Errorf("write file %v: %w", inputBookmarksPath, err)
 	}
