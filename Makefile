@@ -6,14 +6,14 @@ help: ## Show the help
 it: build build-tests ## Initialize the development environment
 
 GOLANG_VERSION=1.23
-DOCKER_REGISTRY=gotenberg
+DOCKER_REGISTRY=ghcr.io/fulll
 DOCKER_REPOSITORY=gotenberg
 GOTENBERG_VERSION=snapshot
 GOTENBERG_USER_GID=1001
 GOTENBERG_USER_UID=1001
 NOTO_COLOR_EMOJI_VERSION=v2.047 # See https://github.com/googlefonts/noto-emoji/releases.
 PDFTK_VERSION=v3.3.3 # See https://gitlab.com/pdftk-java/pdftk/-/releases - Binary package.
-PDFCPU_VERSION=v0.8.1 # See https://github.com/pdfcpu/pdfcpu/releases.
+PDFCPU_VERSION=v0.9.1 # See https://github.com/pdfcpu/pdfcpu/releases.
 GOLANGCI_LINT_VERSION=v1.61.0 # See https://github.com/golangci/golangci-lint/releases.
 
 .PHONY: build
@@ -76,6 +76,7 @@ PDFENGINES_MERGE_ENGINES=qpdf,pdfcpu,pdftk
 PDFENGINES_CONVERT_ENGINES=libreoffice-pdfengine
 PDFENGINES_READ_METADATA_ENGINES=exiftool
 PDFENGINES_WRITE_METADATA_ENGINES=exiftool
+PDFENGINES_IMPORT_BOOKMARKS_ENGINES=pdfcpu
 PDFENGINES_DISABLE_ROUTES=false
 PROMETHEUS_NAMESPACE=gotenberg
 PROMETHEUS_COLLECT_INTERVAL=1s
@@ -144,6 +145,7 @@ run: ## Start a Gotenberg container
 	--pdfengines-convert-engines=$(PDFENGINES_CONVERT_ENGINES) \
 	--pdfengines-read-metadata-engines=$(PDFENGINES_READ_METADATA_ENGINES) \
 	--pdfengines-write-metadata-engines=$(PDFENGINES_WRITE_METADATA_ENGINES) \
+	--pdfengines-import-bookmarks-engines=$(PDFENGINES_IMPORT_BOOKMARKS_ENGINES) \
 	--pdfengines-disable-routes=$(PDFENGINES_DISABLE_ROUTES) \
 	--prometheus-namespace=$(PROMETHEUS_NAMESPACE) \
 	--prometheus-collect-interval=$(PROMETHEUS_COLLECT_INTERVAL) \
