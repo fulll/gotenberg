@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/labstack/echo/v4"
@@ -103,6 +104,24 @@ func WriteMetadataStub(ctx *api.Context, engine gotenberg.PdfEngine, metadata ma
 	}
 
 	return nil
+}
+
+// Import Bookmarks in a given PDF.
+func ImportBookmarksStub(ctx *api.Context, engine gotenberg.PdfEngine, inputPath string, inputBookmarks []byte, outputPath string) (string, error) {
+	if len(inputBookmarks) == 0 {
+		fmt.Println("ImportBookmarksStub BM empty")
+		return inputPath, nil
+	}
+
+	inputBookmarksPath := ctx.GeneratePath(".json")
+	os.WriteFile(inputBookmarksPath, inputBookmarks, 0o644)
+
+	err := engine.ImportBookmarks(ctx, ctx.Log(), inputPath, inputBookmarksPath, outputPath)
+	if err != nil {
+		return "", fmt.Errorf("optimize %v: %w", inputPath, err)
+	}
+
+	return outputPath, nil
 }
 
 // mergeRoute returns an [api.Route] which can merge PDFs.
