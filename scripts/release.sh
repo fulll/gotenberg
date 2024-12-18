@@ -54,11 +54,7 @@ else
 fi
 
 # Multi-arch build takes a lot of time.
-if [ "$LINUX_AMD64_RELEASE" = true ]; then
-    PLATFORM_FLAG="--platform linux/amd64"
-else
-    PLATFORM_FLAG="--platform linux/amd64,linux/arm64,linux/386,linux/arm/v7"
-fi
+ PLATFORM_FLAG="--platform linux/amd64"
 
 docker buildx build \
   --build-arg GOLANG_VERSION="$GOLANG_VERSION" \
