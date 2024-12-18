@@ -6,7 +6,8 @@ help: ## Show the help
 it: build build-tests ## Initialize the development environment
 
 GOLANG_VERSION=1.23
-DOCKER_REPOSITORY=ghcr.io/fulll/gotenberg
+DOCKER_REGISTRY=ghcr.io/fulll
+DOCKER_REPOSITORY=gotenberg
 GOTENBERG_VERSION=snapshot
 GOTENBERG_USER_GID=1001
 GOTENBERG_USER_UID=1001
