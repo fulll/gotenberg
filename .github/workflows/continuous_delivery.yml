@@ -40,7 +40,7 @@ jobs:
           # Extract the tag name and strip the first letter using cut
           TAG_NAME=$(echo "${{ github.event.release.tag_name }}" | cut -c 2-)
       
-          docker pull ghcr.io/fulll/gotenberg/gotenberg:${TAG_NAME}-cloudrun
-          docker tag ghcr.io/fulll/gotenberg/gotenberg:${TAG_NAME}-cloudrun 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg:${TAG_NAME}-cloudrun
+          docker pull ghcr.io/fulll/gotenberg:${TAG_NAME}-cloudrun
+          docker tag ghcr.io/fulll/gotenberg:${TAG_NAME}-cloudrun 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:${TAG_NAME}-cloudrun
           aws --region eu-central-1 ecr get-login-password | docker login --username AWS --password-stdin 285715278780.dkr.ecr.eu-central-1.amazonaws.com
           docker push 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:${TAG_NAME}-cloudrun
