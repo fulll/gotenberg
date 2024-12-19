@@ -43,4 +43,5 @@ jobs:
           docker pull ghcr.io/fulll/gotenberg:${TAG_NAME}-cloudrun
           docker tag ghcr.io/fulll/gotenberg:${TAG_NAME}-cloudrun 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:${TAG_NAME}-cloudrun
           aws --region eu-central-1 ecr get-login-password | docker login --username AWS --password-stdin 285715278780.dkr.ecr.eu-central-1.amazonaws.com
-          docker push 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:${TAG_NAME}-cloudrun
+          docker tag 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:${TAG_NAME}-cloudrun 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:latest
+          docker push 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:${TAG_NAME}-cloudrun  285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:latest
