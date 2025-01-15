@@ -647,16 +647,18 @@ func convertUrl(ctx *api.Context, chromium Api, engine gotenberg.PdfEngine, url 
 	}
 
 	if options.GenerateDocumentOutline {
-		bookmarks, errMarshal := json.Marshal(options.Bookmarks)
-		outputBMPath := ctx.GeneratePath(".pdf")
+		if len(options.Bookmarks.Bookmarks) > 0 {
+			bookmarks, errMarshal := json.Marshal(options.Bookmarks)
+			outputBMPath := ctx.GeneratePath(".pdf")
 
-		if errMarshal == nil {
-			outputPath, err = pdfengines.ImportBookmarksStub(ctx, engine, outputPath, bookmarks, outputBMPath)
-			if err != nil {
-				return fmt.Errorf("import bookmarks into PDF err: %w", err)
+			if errMarshal == nil {
+				outputPath, err = pdfengines.ImportBookmarksStub(ctx, engine, outputPath, bookmarks, outputBMPath)
+				if err != nil {
+					return fmt.Errorf("import bookmarks into PDF err: %w", err)
+				}
+			} else {
+				return fmt.Errorf("import bookmarks into PDF errMarshal : %w", errMarshal)
 			}
-		} else {
-			return fmt.Errorf("import bookmarks into PDF errMarshal : %w", errMarshal)
 		}
 	}
 
