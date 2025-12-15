@@ -19,132 +19,40 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v6
 
+      # action modified to onlu build
       - name: Build and push
         id: build_push
         uses: ./.github/actions/build-test-push
         with:
-          docker_hub_username: ${{ secrets.DOCKERHUB_USERNAME }}
-          docker_hub_password: ${{ secrets.DOCKERHUB_TOKEN }}
           version: ${{ github.event.release.tag_name }}
           platform: linux/amd64
           skip_integrations_tests: true
 
-  release_386:
-    name: Release linux/386
-    runs-on: ubuntu-latest
-    outputs:
-      tags: ${{ steps.build_push.outputs.tags }}
-      tags_cloud_run: ${{ steps.build_push.outputs.tags_cloud_run }}
-      tags_aws_lambda: ${{ steps.build_push.outputs.tags_aws_lambda }}
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
+      # list docker images that have bee built
+      - name: Output built tags to console
+        run: |
+          echo "Tags: ${{ steps.build_push.outputs.tags }}"
+          echo "Cloud Run Tags: ${{ steps.build_push.outputs.tags_cloud_run }}"
+          echo "AWS Lambda Tags: ${{ steps.build_push.outputs.tags_aws_lambda }}"
 
-      - name: Build and push
-        id: build_push
-        uses: ./.github/actions/build-test-push
-        with:
-          docker_hub_username: ${{ secrets.DOCKERHUB_USERNAME }}
-          docker_hub_password: ${{ secrets.DOCKERHUB_TOKEN }}
-          version: ${{ github.event.release.tag_name }}
-          platform: linux/386
-          skip_integrations_tests: true
+      - name: generate aws credentials config
+        env:
+          AWS_CREDENTIALS: ${{ secrets.STAGING_AWS_CREDENTIALS }}
+          aws-region: eu-central-1
+        run: |
+          mkdir -p "${HOME}/.aws"
+          echo "${AWS_CREDENTIALS}" > "${HOME}/.aws/credentials"
 
-  release_ppc64le:
-    name: Release linux/ppc64le
-    runs-on: ubuntu-24.04-ppc64le
-    outputs:
-      tags: ${{ steps.build_push.outputs.tags }}
-      tags_cloud_run: ${{ steps.build_push.outputs.tags_cloud_run }}
-      tags_aws_lambda: ${{ steps.build_push.outputs.tags_aws_lambda }}
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Build and push
-        id: build_push
-        uses: ./.github/actions/build-test-push
-        with:
-          docker_hub_username: ${{ secrets.DOCKERHUB_USERNAME }}
-          docker_hub_password: ${{ secrets.DOCKERHUB_TOKEN }}
-          version: ${{ github.event.release.tag_name }}
-          platform: linux/ppc64le
-          skip_integrations_tests: true
-
-  release_arm64:
-    name: Release linux/arm64
-    runs-on: ubuntu-24.04-arm
-    outputs:
-      tags: ${{ steps.build_push.outputs.tags }}
-      tags_cloud_run: ${{ steps.build_push.outputs.tags_cloud_run }}
-      tags_aws_lambda: ${{ steps.build_push.outputs.tags_aws_lambda }}
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Build and push
-        id: build_push
-        uses: ./.github/actions/build-test-push
-        with:
-          docker_hub_username: ${{ secrets.DOCKERHUB_USERNAME }}
-          docker_hub_password: ${{ secrets.DOCKERHUB_TOKEN }}
-          version: ${{ github.event.release.tag_name }}
-          platform: linux/arm64
-          skip_integrations_tests: true
-
-  release_arm_v7:
-    name: Release linux/arm/v7
-    runs-on: ubuntu-24.04-arm
-    outputs:
-      tags: ${{ steps.build_push.outputs.tags }}
-      tags_cloud_run: ${{ steps.build_push.outputs.tags_cloud_run }}
-      tags_aws_lambda: ${{ steps.build_push.outputs.tags_aws_lambda }}
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Build and push
-        id: build_push
-        uses: ./.github/actions/build-test-push
-        with:
-          docker_hub_username: ${{ secrets.DOCKERHUB_USERNAME }}
-          docker_hub_password: ${{ secrets.DOCKERHUB_TOKEN }}
-          version: ${{ github.event.release.tag_name }}
-          platform: linux/arm/v7
-          skip_integrations_tests: true
-
-  merge_clean_release_tags:
-    needs:
-      - release_amd64
-      - release_386
-      - release_ppc64le
-      - release_arm64
-      - release_arm_v7
-    name: Merge and clean release tags
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Merge
-        uses: ./.github/actions/merge
-        with:
-          docker_hub_username: ${{ secrets.DOCKERHUB_USERNAME }}
-          docker_hub_password: ${{ secrets.DOCKERHUB_TOKEN }}
-          tags: "${{ needs.release_amd64.outputs.tags }},${{ needs.release_386.outputs.tags }},${{ needs.release_ppc64le.outputs.tags }},${{ needs.release_arm64.outputs.tags }},${{ needs.release_arm_v7.outputs.tags }}"
-          alternate_registry: thecodingmachine
-
-      - name: Merge AWS Lambda
-        uses: ./.github/actions/merge
-        with:
-          docker_hub_username: ${{ secrets.DOCKERHUB_USERNAME }}
-          docker_hub_password: ${{ secrets.DOCKERHUB_TOKEN }}
-          tags: "${{ needs.release_amd64.outputs.tags_aws_lambda }},${{ needs.release_arm64.outputs.tags_aws_lambda }}"
-          alternate_registry: thecodingmachine
-
-      - name: Clean
-        uses: ./.github/actions/clean
-        with:
-          docker_hub_username: ${{ secrets.DOCKERHUB_USERNAME }}
-          docker_hub_password: ${{ secrets.DOCKERHUB_TOKEN }}
-          tags: "${{ needs.release_amd64.outputs.tags }},${{ needs.release_386.outputs.tags }},${{ needs.release_ppc64le.outputs.tags }},${{ needs.release_arm64.outputs.tags }},${{ needs.release_arm_v7.outputs.tags }},${{ needs.release_amd64.outputs.tags_aws_lambda }},${{ needs.release_arm64.outputs.tags_aws_lambda }}"
+      #  Get the image build by the upstream process then :
+      #  - tag it for AWS ECR
+      #  - push it to AWS ECR
+      - name: docker login and push
+        run: |
+          # Extract the tag name and strip the first letter using cut
+          TAG_NAME=$(echo "${{ github.event.release.tag_name }}" | cut -c 2-)
+      
+          docker tag ghcr.io/fulll/gotenberg:latest-cloudrun 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:${TAG_NAME}-cloudrun
+          aws --region eu-central-1 ecr get-login-password | docker login --username AWS --password-stdin 285715278780.dkr.ecr.eu-central-1.amazonaws.com
+          docker tag 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:${TAG_NAME}-cloudrun 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:latest
+          docker push 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:${TAG_NAME}-cloudrun
+          docker push 285715278780.dkr.ecr.eu-central-1.amazonaws.com/gotenberg-fulll:latest
