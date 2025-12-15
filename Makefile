@@ -8,6 +8,7 @@ help: ## Show the help
 build: ## Build the Gotenberg's Docker image
 	docker build \
 	-t $(DOCKER_REGISTRY)/$(DOCKER_REPOSITORY):$(GOTENBERG_VERSION) \
+	-t gotenberg/gotenberg:snapshot \
 	-f $(DOCKERFILE) $(DOCKER_BUILD_CONTEXT)
 
 GOTENBERG_HIDE_BANNER=false
