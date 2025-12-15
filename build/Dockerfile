@@ -2,6 +2,7 @@
 # concatenate them. Also, we have to repeat ARG instructions in each build
 # stage that uses them.
 ARG GOLANG_VERSION=1.26.0
+ARG CHROME_VERSION=143.0.7499.109-1
 
 # ----------------------------------------------
 # pdfcpu binary build stage
@@ -94,6 +95,7 @@ FROM base-image-stage
 ARG GOTENBERG_VERSION=snapshot
 ARG GOTENBERG_USER_GID=1001
 ARG GOTENBERG_USER_UID=1001
+ARG CHROME_VERSION
 # See https://github.com/googlefonts/noto-emoji/releases.
 ARG NOTO_COLOR_EMOJI_VERSION=v2.051
 # See https://gitlab.com/pdftk-java/pdftk/-/releases - Binary package.
@@ -194,9 +196,30 @@ RUN \
 
 RUN \
     # Install Chromium.
-    apt-get update -qq &&\
-    apt-get upgrade -yqq &&\
-    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends chromium &&\
+    /bin/bash -c \
+    'set -e &&\
+    if [[ "$(dpkg --print-architecture)" == "amd64" ]]; then \
+      apt-get update -qq &&\
+      if [ -z "$CHROME_VERSION" ]; then \
+        # Install latest stable version (use gpg dearmor instead of apt-key)
+        curl -fsSL https://dl.google.com/linux/linux_signing_key.pub -o /usr/share/keyrings/google-linux-signing-keyring.gpg &&\
+        echo "deb [signed-by=/usr/share/keyrings/google-linux-signing-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | tee /etc/apt/sources.list.d/google-chrome.list &&\
+        apt-get update -qq &&\
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends --allow-unauthenticated google-chrome-stable &&\
+        mv /usr/bin/google-chrome-stable /usr/bin/chromium; \
+      else \
+        # Install specific version
+        apt-get update -qq &&\
+        curl --output /tmp/chrome.deb "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb" &&\
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends /tmp/chrome.deb &&\
+        mv /usr/bin/google-chrome-stable /usr/bin/chromium &&\
+        rm -rf /tmp/chrome.deb; \  
+      fi \
+    elif [[ "$(dpkg --print-architecture)" == "armhf" ]]; then \
+      apt-get update -qq &&\
+      apt-get upgrade -yqq &&\
+      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends chromium; \
+    fi' &&\
     # Verify installation.
     chromium --version &&\
     # Cleanup.
