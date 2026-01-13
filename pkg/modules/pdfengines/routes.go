@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -299,6 +300,26 @@ func EmbedFilesStub(ctx *api.Context, engine gotenberg.PdfEngine, embedPaths []s
 	}
 
 	return nil
+}
+
+// ImportBookmarksStub imports bookmarks into a PDF file.
+func ImportBookmarksStub(ctx *api.Context, engine gotenberg.PdfEngine, inputPath string, inputBookmarks []byte, outputPath string) (string, error) {
+	if len(inputBookmarks) == 0 {
+		fmt.Println("ImportBookmarksStub BM empty")
+		return inputPath, nil
+	}
+
+	inputBookmarksPath := ctx.GeneratePath(".json")
+	err := os.WriteFile(inputBookmarksPath, inputBookmarks, 0o600)
+	if err != nil {
+		return "", fmt.Errorf("write file %v: %w", inputBookmarksPath, err)
+	}
+	err = engine.ImportBookmarks(ctx, ctx.Log(), inputPath, inputBookmarksPath, outputPath)
+	if err != nil {
+		return "", fmt.Errorf("import bookmarks %v: %w", inputPath, err)
+	}
+
+	return outputPath, nil
 }
 
 // mergeRoute returns an [api.Route] which can merge PDFs.

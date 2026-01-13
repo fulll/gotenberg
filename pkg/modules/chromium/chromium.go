@@ -13,6 +13,7 @@ import (
 	"github.com/alexliesenfeld/health"
 	"github.com/chromedp/cdproto/network"
 	"github.com/dlclark/regexp2"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu"
 	flag "github.com/spf13/pflag"
 	"go.uber.org/zap"
 
@@ -243,6 +244,10 @@ type PdfOptions struct {
 	// embedded into the PDF.
 	GenerateDocumentOutline bool
 
+	// Bookmarks to be inserted unmarshaled
+	// as defined in pdfcpu bookmarks export
+	Bookmarks pdfcpu.BookmarkTree
+
 	// GenerateTaggedPdf defines whether to generate tagged (accessible)
 	// PDF.
 	GenerateTaggedPdf bool
@@ -267,6 +272,7 @@ func DefaultPdfOptions() PdfOptions {
 		FooterTemplate:          "<html><head></head><body></body></html>",
 		PreferCssPageSize:       false,
 		GenerateDocumentOutline: false,
+		Bookmarks:               pdfcpu.BookmarkTree{},
 		GenerateTaggedPdf:       false,
 	}
 }
