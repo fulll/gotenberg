@@ -56,3 +56,5 @@ jobs:
           docker tag ${AWS_ECR_REGISTRY}/gotenberg-fulll:${TAG_NAME}-cloudrun ${AWS_ECR_REGISTRY}/gotenberg-fulll:latest
           docker push ${AWS_ECR_REGISTRY}/gotenberg-fulll:${TAG_NAME}-cloudrun
           docker push ${AWS_ECR_REGISTRY}/gotenberg-fulll:latest
+        env:
+          AWS_ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
