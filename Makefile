@@ -11,6 +11,7 @@ build: ## Build the Gotenberg's Docker image
 	-t gotenberg/gotenberg:snapshot \
 	-f $(DOCKERFILE) $(DOCKER_BUILD_CONTEXT)
 
+TZ=UTC
 GOTENBERG_HIDE_BANNER=false
 GOTENBERG_GRACEFUL_SHUTDOWN_DURATION=30s
 GOTENBERG_BUILD_DEBUG_DATA=true
@@ -31,8 +32,9 @@ API-DOWNLOAD-FROM-FROM-MAX-RETRY=4
 API-DISABLE-DOWNLOAD-FROM=false
 API_DISABLE_HEALTH_CHECK_LOGGING=false
 API_ENABLE_DEBUG_ROUTE=false
-CHROMIUM_RESTART_AFTER=10
+CHROMIUM_RESTART_AFTER=100
 CHROMIUM_MAX_QUEUE_SIZE=0
+CHROMIUM_MAX_CONCURRENCY=6
 CHROMIUM_AUTO_START=false
 CHROMIUM_START_TIMEOUT=20s
 CHROMIUM_ALLOW_INSECURE_LOCALHOST=false
@@ -69,6 +71,7 @@ PROMETHEUS_NAMESPACE=gotenberg
 PROMETHEUS_COLLECT_INTERVAL=1s
 PROMETHEUS_DISABLE_ROUTE_LOGGING=false
 PROMETHEUS_DISABLE_COLLECT=false
+PROMETHEUS_METRICS_PATH=/prometheus/metrics
 WEBHOOK_ENABLE_SYNC_MODE=false
 WEBHOOK_ALLOW_LIST=
 WEBHOOK_DENY_LIST=
@@ -86,6 +89,7 @@ run: ## Start a Gotenberg container
 	-p $(API_PORT):$(API_PORT) \
 	-e GOTENBERG_API_BASIC_AUTH_USERNAME=$(GOTENBERG_API_BASIC_AUTH_USERNAME) \
 	-e GOTENBERG_API_BASIC_AUTH_PASSWORD=$(GOTENBERG_API_BASIC_AUTH_PASSWORD) \
+	-e TZ=$(TZ) \
 	$(DOCKER_REGISTRY)/$(DOCKER_REPOSITORY):$(GOTENBERG_VERSION) \
 	gotenberg \
 	--gotenberg-hide-banner=$(GOTENBERG_HIDE_BANNER) \
@@ -109,6 +113,7 @@ run: ## Start a Gotenberg container
 	--chromium-restart-after=$(CHROMIUM_RESTART_AFTER) \
 	--chromium-auto-start=$(CHROMIUM_AUTO_START) \
 	--chromium-max-queue-size=$(CHROMIUM_MAX_QUEUE_SIZE) \
+	--chromium-max-concurrency=$(CHROMIUM_MAX_CONCURRENCY) \
 	--chromium-start-timeout=$(CHROMIUM_START_TIMEOUT) \
 	--chromium-allow-insecure-localhost=$(CHROMIUM_ALLOW_INSECURE_LOCALHOST) \
 	--chromium-ignore-certificate-errors=$(CHROMIUM_IGNORE_CERTIFICATE_ERRORS) \
@@ -144,6 +149,7 @@ run: ## Start a Gotenberg container
 	--prometheus-collect-interval=$(PROMETHEUS_COLLECT_INTERVAL) \
 	--prometheus-disable-route-logging=$(PROMETHEUS_DISABLE_ROUTE_LOGGING) \
 	--prometheus-disable-collect=$(PROMETHEUS_DISABLE_COLLECT) \
+	--prometheus-metrics-path=$(PROMETHEUS_METRICS_PATH) \
 	--webhook-enable-sync-mode="$(WEBHOOK_ENABLE_SYNC_MODE)" \
 	--webhook-allow-list="$(WEBHOOK_ALLOW_LIST)" \
 	--webhook-deny-list="$(WEBHOOK_DENY_LIST)" \
@@ -163,6 +169,7 @@ PLATFORM=
 NO_CONCURRENCY=false
 # Available tags:
 # chromium
+# chromium-concurrent
 # chromium-convert-html
 # chromium-convert-markdown
 # chromium-convert-url
