@@ -133,10 +133,10 @@ type PdfEngine interface {
 	Convert(ctx context.Context, logger *zap.Logger, formats PdfFormats, inputPath, outputPath string) error
 
 	// ReadMetadata extracts the metadata of a given PDF file.
-	ReadMetadata(ctx context.Context, logger *zap.Logger, inputPath string) (map[string]interface{}, error)
+	ReadMetadata(ctx context.Context, logger *zap.Logger, inputPath string) (map[string]any, error)
 
 	// WriteMetadata writes the metadata into a given PDF file.
-	WriteMetadata(ctx context.Context, logger *zap.Logger, metadata map[string]interface{}, inputPath string) error
+	WriteMetadata(ctx context.Context, logger *zap.Logger, metadata map[string]any, inputPath string) error
 
 	// ImportBookmarks imports bookmarks from a JSON file into a given PDF.
 	ImportBookmarks(ctx context.Context, logger *zap.Logger, inputPath, inputBookmarksPath, outputPath string) error
