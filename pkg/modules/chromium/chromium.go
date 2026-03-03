@@ -166,9 +166,26 @@ type Options struct {
 	// "print".
 	EmulatedMediaType string
 
+	// EmulatedMediaFeatures are the media features to emulate, e.g.,
+	// [{"name": "prefers-color-scheme", "value": "dark"}].
+	EmulatedMediaFeatures []EmulatedMediaFeature
+
 	// OmitBackground hides the default white background and allows generating
 	// PDFs with transparency.
 	OmitBackground bool
+}
+
+// EmulatedMediaFeature gathers the available entries for emulating a media
+// feature.
+type EmulatedMediaFeature struct {
+	// Name is the media feature name (e.g., "prefers-color-scheme",
+	// "prefers-reduced-motion").
+	// Required.
+	Name string `json:"name"`
+
+	// Value is the media feature value (e.g., "dark", "reduce").
+	// Required.
+	Value string `json:"value"`
 }
 
 // DefaultOptions returns the default values for Options.
@@ -188,6 +205,7 @@ func DefaultOptions() Options {
 		UserAgent:                       "",
 		ExtraHttpHeaders:                nil,
 		EmulatedMediaType:               "",
+		EmulatedMediaFeatures:           nil,
 		OmitBackground:                  false,
 	}
 }
@@ -553,8 +571,8 @@ func (mod *Chromium) Stop(ctx context.Context) error {
 }
 
 // Debug returns additional debug data.
-func (mod *Chromium) Debug() map[string]interface{} {
-	debug := make(map[string]interface{})
+func (mod *Chromium) Debug() map[string]any {
+	debug := make(map[string]any)
 
 	cmd := exec.Command(mod.args.binPath, "--version") //nolint:gosec
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
