@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"syscall"
@@ -232,6 +233,17 @@ func (engine *PdfCpu) Encrypt(ctx context.Context, logger *zap.Logger, inputPath
 func (engine *PdfCpu) ImportBookmarks(ctx context.Context, logger *zap.Logger, inputPath, inputBookmarksPath, outputPath string) error {
 	if inputBookmarksPath == "" {
 		return nil
+	}
+
+	validInput := regexp.MustCompile(`^[a-zA-Z0-9_\-\./\\]+$`)
+	if !validInput.MatchString(inputPath) {
+		return fmt.Errorf("invalid input")
+	}
+	if !validInput.MatchString(inputBookmarksPath) {
+		return fmt.Errorf("invalid input")
+	}
+	if !validInput.MatchString(outputPath) {
+		return fmt.Errorf("invalid input")
 	}
 
 	var args []string
