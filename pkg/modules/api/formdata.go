@@ -547,6 +547,14 @@ func (form *FormData) mandatoryPath(filename string, target *string) *FormData {
 // readFile binds the content of a file to a string variable. It populates an
 // error if it fails to read the file content.
 func (form *FormData) readFile(path, filename string, target *string) *FormData {
+	if strings.Contains(path, "../") || strings.Contains(path, "..\\") {
+		form.append(
+			fmt.Errorf("invalid file path"),
+		)
+
+		return form
+	}
+
 	b, err := os.ReadFile(path)
 	if err != nil {
 		form.append(
