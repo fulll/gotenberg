@@ -657,6 +657,10 @@ func markdownToHtml(ctx *api.Context, inputPath string, markdownPaths []string) 
 					return "", nil
 				}
 
+				if strings.Contains(path, "../") || strings.Contains(path, "..\\") {
+					return "", fmt.Errorf("Invalid file path")
+				}
+
 				b, err := os.ReadFile(path)
 				if err != nil {
 					return "", fmt.Errorf("read markdown file '%s': %w", filename, err)

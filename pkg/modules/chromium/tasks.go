@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/chromedp/cdproto/cdp"
@@ -139,6 +140,10 @@ func captureScreenshotActionFunc(logger *zap.Logger, outputPath string, options 
 		buffer, err := captureScreenshot.Do(ctx)
 		if err != nil {
 			return fmt.Errorf("capture screenshot: %w", err)
+		}
+
+		if strings.Contains(outputPath, "../") || strings.Contains(outputPath, "..\\") {
+			return fmt.Errorf("invalid file path")
 		}
 
 		file, err := os.OpenFile(outputPath, os.O_CREATE|os.O_WRONLY, 0o600)
