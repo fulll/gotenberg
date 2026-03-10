@@ -503,6 +503,9 @@ func (ctx *Context) BuildOutputFile() (string, error) {
 	}
 
 	archivePath := ctx.GeneratePath(".zip")
+	if strings.Contains(archivePath, "../") || strings.Contains(archivePath, "..\\") {
+		return "", fmt.Errorf("invalid file path")
+	}
 	out, err := os.Create(archivePath)
 	if err != nil {
 		return "", fmt.Errorf("create zip file: %w", err)

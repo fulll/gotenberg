@@ -36,6 +36,11 @@ func webhookMiddleware(w *Webhook) api.Middleware {
 		Handler: func() echo.MiddlewareFunc {
 			return func(next echo.HandlerFunc) echo.HandlerFunc {
 				sendOutputFile := func(params sendOutputFileParams) {
+					if strings.Contains(params.outputPath, "../") || strings.Contains(params.outputPath, "..\\") {
+						params.ctx.Log().Error("invalid file path")
+						params.handleError(fmt.Errorf("invalid file path"))
+						return
+					}
 					outputFile, err := os.Open(params.outputPath)
 					if err != nil {
 						params.ctx.Log().Error(fmt.Sprintf("open output file: %s", err))
