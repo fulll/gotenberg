@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"regexp"
 	"strings"
 	"syscall"
 
@@ -26,6 +27,15 @@ type Cmd struct {
 //
 // See https://medium.com/@felixge/killing-a-child-process-and-all-of-its-children-in-go-54079af94773.
 func Command(logger *zap.Logger, binPath string, args ...string) *Cmd {
+	validInput := regexp.MustCompile(`^[a-zA-Z0-9_\-\./:= ]+$`)
+	if !validInput.MatchString(binPath) {
+		panic(fmt.Errorf("invalid input"))
+	}
+	for _, arg := range args {
+		if !validInput.MatchString(arg) {
+			panic(fmt.Errorf("invalid input"))
+		}
+	}
 	cmd := exec.Command(binPath, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
@@ -46,6 +56,15 @@ func CommandContext(ctx context.Context, logger *zap.Logger, binPath string, arg
 		return nil, errors.New("nil context")
 	}
 
+	validInput := regexp.MustCompile(`^[a-zA-Z0-9_\-\./:= ]+$`)
+	if !validInput.MatchString(binPath) {
+		return nil, fmt.Errorf("invalid input")
+	}
+	for _, arg := range args {
+		if !validInput.MatchString(arg) {
+			return nil, fmt.Errorf("invalid input")
+		}
+	}
 	cmd := exec.CommandContext(ctx, binPath, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 

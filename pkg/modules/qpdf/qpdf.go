@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"syscall"
 
 	"go.uber.org/zap"
@@ -174,12 +175,19 @@ func (engine *QPdf) WriteMetadata(ctx context.Context, logger *zap.Logger, metad
 
 // Encrypt adds password protection to a PDF file using QPDF.
 func (engine *QPdf) Encrypt(ctx context.Context, logger *zap.Logger, inputPath, userPassword, ownerPassword string) error {
+	validInput := regexp.MustCompile(`^[a-zA-Z0-9_\-\./\\]+$`)
 	if userPassword == "" {
 		return errors.New("user password cannot be empty")
+	}
+	if !validInput.MatchString(userPassword) {
+		return fmt.Errorf("invalid input")
 	}
 
 	if ownerPassword == "" {
 		ownerPassword = userPassword
+	}
+	if !validInput.MatchString(ownerPassword) {
+		return fmt.Errorf("invalid input")
 	}
 
 	args := make([]string, 0, 7+len(engine.globalArgs))
