@@ -2,7 +2,7 @@
 # concatenate them. Also, we have to repeat ARG instructions in each build
 # stage that uses them.
 ARG GOLANG_VERSION=1.26.0
-ARG CHROME_VERSION=145.0.7632.116-1
+ARG CHROME_VERSION=146.0.7680.80-1
 
 # ----------------------------------------------
 # pdfcpu binary build stage
@@ -216,7 +216,7 @@ RUN \
       else \
         # Install specific version
         apt-get update -qq &&\
-        curl --output /tmp/chrome.deb "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb" &&\
+        curl -L --output /tmp/chrome.deb "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb" &&\
         DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends /tmp/chrome.deb &&\
         mv /usr/bin/google-chrome-stable /usr/bin/chromium &&\
         rm -rf /tmp/chrome.deb; \  
