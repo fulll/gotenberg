@@ -216,7 +216,7 @@ RUN \
       else \
         # Install specific version
         apt-get update -qq &&\
-        curl -L --output /tmp/chrome.deb "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb" &&\
+        curl -fsSL --output /tmp/chrome.deb "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb" &&\
         DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends /tmp/chrome.deb &&\
         mv /usr/bin/google-chrome-stable /usr/bin/chromium &&\
         rm -rf /tmp/chrome.deb; \  
