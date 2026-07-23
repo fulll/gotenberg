@@ -56,10 +56,10 @@ RUN go build -o gotenberg -ldflags "-s -w -X 'github.com/gotenberg/gotenberg/v8/
 # Custom JRE stage
 # Credits: https://github.com/jodconverter/docker-image-jodconverter-runtime
 # ----------------------------------------------
-FROM debian:13-slim@sha256:1d3c811171a08a5adaa4a163fbafd96b61b87aa871bbc7aa15431ac275d3d430 AS custom-jre-stage
+FROM debian:13-slim@sha256:020c0d20b9880058cbe785a9db107156c3c75c2ac944a6aa7ab59f2add76a7bd AS custom-jre-stage
 
 # Setting DOCKERFILE_DATE forces a build cache refresh for the package upgrades
-ENV DOCKERFILE_DATE=2026-03-16
+ENV DOCKERFILE_DATE=2026-07-23
 
 RUN \
     apt-get update -qq &&\
@@ -81,7 +81,7 @@ RUN jlink \
 # ----------------------------------------------
 # Base image stage
 # ----------------------------------------------
-FROM debian:13-slim@sha256:1d3c811171a08a5adaa4a163fbafd96b61b87aa871bbc7aa15431ac275d3d430 AS base-image-stage
+FROM debian:13-slim@sha256:020c0d20b9880058cbe785a9db107156c3c75c2ac944a6aa7ab59f2add76a7bd AS base-image-stage
 
 ARG TIMEZONE=UTC
 ENV TZ=$TIMEZONE
@@ -112,7 +112,7 @@ LABEL org.opencontainers.image.title="Gotenberg" \
     org.opencontainers.image.source="https://github.com/gotenberg/gotenberg"
 
 # Setting DOCKERFILE_DATE forces a build cache refresh for the package upgrades
-ENV DOCKERFILE_DATE=2026-03-16
+ENV DOCKERFILE_DATE=2026-07-23
 
 RUN \
     # Create a non-root user.
@@ -219,7 +219,7 @@ RUN \
         curl -fsSL --output /tmp/chrome.deb "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb" &&\
         DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends /tmp/chrome.deb &&\
         mv /usr/bin/google-chrome-stable /usr/bin/chromium &&\
-        rm -rf /tmp/chrome.deb; \  
+        rm -rf /tmp/chrome.deb; \
       fi \
     elif [[ "$(dpkg --print-architecture)" == "armhf" ]]; then \
       apt-get update -qq &&\
