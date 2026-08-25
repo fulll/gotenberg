@@ -1,0 +1,12 @@
+ignore:
+  cves:
+    CVE-2026-23949:
+      reason: python dependency, waiting for upstream release of gotenberg
+    CVE-2026-24049:
+      reason: python dependency, waiting for upstream release of gotenberg
+    CVE-2025-48924:
+      reason: java dependency, waiting for upstream release of gotenberg
+    CVE-2025-47914:
+      reason: Go dependency, waiting for upstream release of gotenberg
+    CVE-2025-58181:
+      reason: Go dependency, waiting for upstream release of gotenberg

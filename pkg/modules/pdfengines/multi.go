@@ -20,6 +20,7 @@ type multiPdfEngines struct {
 	writeMetadataEngines []gotenberg.PdfEngine
 	passwordEngines      []gotenberg.PdfEngine
 	embedEngines         []gotenberg.PdfEngine
+	importBookmarksEngines []gotenberg.PdfEngine
 }
 
 func newMultiPdfEngines(
@@ -30,17 +31,19 @@ func newMultiPdfEngines(
 	readMetadataEngines,
 	writeMetadataEngines,
 	passwordEngines,
-	embedEngines []gotenberg.PdfEngine,
+	embedEngines,
+	importBookmarksEngines []gotenberg.PdfEngine,
 ) *multiPdfEngines {
 	return &multiPdfEngines{
-		mergeEngines:         mergeEngines,
-		splitEngines:         splitEngines,
-		flattenEngines:       flattenEngines,
-		convertEngines:       convertEngines,
-		readMetadataEngines:  readMetadataEngines,
-		writeMetadataEngines: writeMetadataEngines,
-		passwordEngines:      passwordEngines,
-		embedEngines:         embedEngines,
+		mergeEngines:           mergeEngines,
+		splitEngines:           splitEngines,
+		flattenEngines:         flattenEngines,
+		convertEngines:         convertEngines,
+		readMetadataEngines:    readMetadataEngines,
+		writeMetadataEngines:   writeMetadataEngines,
+		passwordEngines:        passwordEngines,
+		embedEngines:           embedEngines,
+		importBookmarksEngines: importBookmarksEngines,
 	}
 }
 
@@ -264,6 +267,31 @@ func (multi *multiPdfEngines) EmbedFiles(ctx context.Context, logger *zap.Logger
 	}
 
 	return fmt.Errorf("embed files into PDF using multi PDF engines: %w", err)
+}
+
+// ImportBookmarks imports bookmarks from a JSON file into a PDF using the first available
+// engine that supports bookmark importing.
+func (multi *multiPdfEngines) ImportBookmarks(ctx context.Context, logger *zap.Logger, inputPath, inputBookmarksPath, outputPath string) error {
+	var err error
+	errChan := make(chan error, 1)
+
+	for _, engine := range multi.importBookmarksEngines {
+		go func(engine gotenberg.PdfEngine) {
+			errChan <- engine.ImportBookmarks(ctx, logger, inputPath, inputBookmarksPath, outputPath)
+		}(engine)
+
+		select {
+		case mergeErr := <-errChan:
+			errored := multierr.AppendInto(&err, mergeErr)
+			if !errored {
+				return nil
+			}
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
+	return fmt.Errorf("import bookmarks into PDF with multi PDF engines: %w", err)
 }
 
 // Interface guards.
