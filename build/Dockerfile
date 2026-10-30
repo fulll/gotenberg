@@ -56,7 +56,7 @@ RUN go build -o gotenberg -ldflags "-s -w -X 'github.com/gotenberg/gotenberg/v8/
 # Custom JRE stage
 # Credits: https://github.com/jodconverter/docker-image-jodconverter-runtime
 # ----------------------------------------------
-FROM debian:13-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132 AS custom-jre-stage
+FROM debian:13-slim@sha256:f6b08b09a05725f9431502d3b5714f5c4576e82c1a84fa1debe0c24a7e0c3ec4 AS custom-jre-stage
 
 # Setting DOCKERFILE_DATE forces a build cache refresh for the package upgrades
 ENV DOCKERFILE_DATE=2026-08-25
@@ -81,7 +81,7 @@ RUN jlink \
 # ----------------------------------------------
 # Base image stage
 # ----------------------------------------------
-FROM debian:13-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132 AS base-image-stage
+FROM debian:13-slim@sha256:f6b08b09a05725f9431502d3b5714f5c4576e82c1a84fa1debe0c24a7e0c3ec4 AS base-image-stage
 
 ARG TIMEZONE=UTC
 ENV TZ=$TIMEZONE
