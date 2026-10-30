@@ -2,7 +2,7 @@
 # concatenate them. Also, we have to repeat ARG instructions in each build
 # stage that uses them.
 ARG GOLANG_VERSION=1.27.1
-ARG CHROME_VERSION=154.0.8037.97-1
+ARG CHROME_VERSION=156.0.8078.79-1
 
 # ----------------------------------------------
 # pdfcpu binary build stage
