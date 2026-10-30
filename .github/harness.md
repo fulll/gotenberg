@@ -2,7 +2,7 @@
 
 `AGENTS.md` is the canonical repository guidance. Its original instructions are preserved; Gotenberg-specific additions belong there or in distinctly named local agents/skills, never in upstream files.
 
-`CLAUDE.md` contains only `@AGENTS.md`. Copilot loads the root `AGENTS.md` and `.github/copilot-instructions.md` points to the same file. Agents and skills have one source under `.github/`; `.claude/` exposes them through relative symbolic links.
+`CLAUDE.md` contains only `@AGENTS.md`. Copilot CLI static discovery lists the root `AGENTS.md`; `.github/copilot-instructions.md` points to the same file. Effective instruction loading in interactive/cloud sessions and Claude's import remains to be validated. Agents and skills have one source under `.github/`; `.claude/` exposes them through relative symbolic links.
 
 ## Inventory
 
@@ -14,7 +14,7 @@
 
 The Go implementation agent and testing skill are repository-specific: `gotenberg-implement` covers backward-compatible module/API changes and `gotenberg-testing` covers the Makefile/Godog workflow. `create-agentsmd` is the mandatory common skill.
 
-Only the common scope of the tracking issue applies. This is a Go document-conversion service, not a reusable Terraform AWS module repository. The conditional Terraform section does not apply: `terraform-aws-implement`, `terraform-iac-reviewer`, `terraform.instructions.md` and Terraform validation workflows are neither pre-existing nor added.
+Only the common scope of the tracking issue applies. This is a Go document-conversion service, not a reusable Terraform AWS module repository. A recursive filesystem check and tracked-tree inspection found no `.infra/terraform/` directory at any depth. Neither condition making `terraform-aws-implement` mandatory is met. The module-specific section also does not apply: `terraform-aws-implement`, `terraform-iac-reviewer`, `terraform.instructions.md` and Terraform validation workflows are neither pre-existing nor added. If an application later adds `.infra/terraform/`, reassess the implementation agent requirement without automatically installing module-specific components.
 
 GitHub issues are disabled on `fulll/gotenberg` (`has_issues: false`, verified through the repository API). The `refine-issue` agent and its Claude link, initially added by this PR, are removed rather than preserved as pre-existing customizations. No issue-writing, epic-writing or create-issue-from-prompt components exist to deduplicate. Other optional upstream skills (`agentic-eval`, `aws-well-architected-review`, `devops-rollout-plan`, `github-actions-hardening`) are not installed because this change establishes no concrete need for them.
 
@@ -63,7 +63,7 @@ With the relevant CLI installed and authenticated, open Claude Code in the repos
 
 Copilot CLI static discovery lists the skills and instruction files, including `AGENTS.md`; `.github/copilot-instructions.md` was absent before this PR, so its pointer replaces no existing rules. Effective instruction loading in cloud mode and the Claude import, plus functional agent/skill parity in both tools, remain unverified. A pointer and valid symlinks do not resolve these acceptance blockers.
 
-The official `create-agentsmd` skill instructs the agent to create a complete `AGENTS.md`, while existing Gotenberg instructions must not be overwritten. The upstream skill is intentionally unchanged. Suspend any operation that would replace existing guidance. Proposed resolution for maintainer validation: explicitly request additive maintenance, retain the original instruction bytes and review the resulting diff before accepting it. This proposal is not evidence that the conflict is resolved.
+No actual contradiction between the official skill and local rules, nor a runtime format rejection, has been demonstrated. The previous description of "create complete instructions" versus preserving existing guidance as an established conflict was too strong: completeness does not require deleting existing rules. Maintain instructions additively, retain the original instruction bytes and review the resulting diff. If a concrete conflict appears, suspend the affected operation and submit its evidence and a proposed resolution for validation, without changing the official resource. Unexecuted runtime checks remain acceptance gaps, not proof of incompatibility.
 
 Validate interactive discovery and instruction loading in isolated Claude Code, Copilot CLI and cloud sessions, and repeat clone checks on Linux. If a tool rejects an official resource or symbolic links, record its exact error and submit a local wrapper or a generated, CI-checked synchronization alternative for approval; do not modify the official resource or silently install an alternative.
 
