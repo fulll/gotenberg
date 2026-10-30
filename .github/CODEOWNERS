@@ -1,2 +1,5 @@
 /.infra/ @fulll/chapter-validators-core @fulll/chapter-validators-platform-operations
 /.github/ @fulll/chapter-validators-core @fulll/chapter-validators-platform-operations
+/AGENTS.md @fulll/chapter-validators-core @fulll/chapter-validators-platform-operations
+/CLAUDE.md @fulll/chapter-validators-core @fulll/chapter-validators-platform-operations
+/.claude/ @fulll/chapter-validators-core @fulll/chapter-validators-platform-operations
