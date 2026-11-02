@@ -21,6 +21,20 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: generate aws credentials config
+        env:
+          AWS_CREDENTIALS: ${{ secrets.STAGING_AWS_CREDENTIALS }}
+          aws-region: eu-central-1
+        run: |
+          mkdir -p "${HOME}/.aws"
+          echo "${AWS_CREDENTIALS}" > "${HOME}/.aws/credentials"
+
+      - name: docker login to AWS ECR
+        run: |
+          aws --region eu-central-1 ecr get-login-password | docker login --username AWS --password-stdin ${AWS_ECR_REGISTRY}
+        env:
+          AWS_ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+
       # action modified to onlu build
       - name: Build and push
         id: build_push
@@ -37,24 +51,15 @@ jobs:
           echo "Cloud Run Tags: ${{ steps.build_push.outputs.tags_cloud_run }}"
           echo "AWS Lambda Tags: ${{ steps.build_push.outputs.tags_aws_lambda }}"
 
-      - name: generate aws credentials config
-        env:
-          AWS_CREDENTIALS: ${{ secrets.STAGING_AWS_CREDENTIALS }}
-          aws-region: eu-central-1
-        run: |
-          mkdir -p "${HOME}/.aws"
-          echo "${AWS_CREDENTIALS}" > "${HOME}/.aws/credentials"
-
       #  Get the image build by the upstream process then :
       #  - tag it for AWS ECR
       #  - push it to AWS ECR
-      - name: docker login and push
+      - name: tag and push
         run: |
           # Extract the tag name and strip the first letter using cut
           TAG_NAME=$(echo "${{ github.event.release.tag_name }}" | cut -c 2-)
       
           docker tag ghcr.io/fulll/gotenberg:latest-cloudrun ${AWS_ECR_REGISTRY}/gotenberg-fulll:${TAG_NAME}-cloudrun
-          aws --region eu-central-1 ecr get-login-password | docker login --username AWS --password-stdin ${AWS_ECR_REGISTRY}
           docker tag ${AWS_ECR_REGISTRY}/gotenberg-fulll:${TAG_NAME}-cloudrun ${AWS_ECR_REGISTRY}/gotenberg-fulll:latest
           docker push ${AWS_ECR_REGISTRY}/gotenberg-fulll:${TAG_NAME}-cloudrun
           docker push ${AWS_ECR_REGISTRY}/gotenberg-fulll:latest
