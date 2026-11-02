@@ -101,6 +101,11 @@ func (engine *LibreOfficePdfEngine) EmbedFiles(ctx context.Context, logger *zap.
 	return fmt.Errorf("embed files with LibreOffice: %w", gotenberg.ErrPdfEngineMethodNotSupported)
 }
 
+// ImportBookmarks is not available in this implementation.
+func (engine *LibreOfficePdfEngine) ImportBookmarks(ctx context.Context, logger *zap.Logger, inputPath, inputBookmarksPath, outputPath string) error {
+	return fmt.Errorf("import bookmarks into PDF with LibreOffice: %w", gotenberg.ErrPdfEngineMethodNotSupported)
+}
+
 // Interface guards.
 var (
 	_ gotenberg.Module      = (*LibreOfficePdfEngine)(nil)

@@ -138,6 +138,9 @@ type PdfEngine interface {
 	// WriteMetadata writes the metadata into a given PDF file.
 	WriteMetadata(ctx context.Context, logger *zap.Logger, metadata map[string]any, inputPath string) error
 
+	// ImportBookmarks imports bookmarks from a JSON file into a given PDF.
+	ImportBookmarks(ctx context.Context, logger *zap.Logger, inputPath, inputBookmarksPath, outputPath string) error
+
 	// Encrypt adds password protection to a PDF file.
 	// The userPassword is required to open the document.
 	// The ownerPassword provides full access to the document.
