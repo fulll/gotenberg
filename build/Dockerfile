@@ -122,6 +122,9 @@ RUN \
     mkdir /home/gotenberg &&\
     chown gotenberg: /home/gotenberg
 
+# Setting DOCKERFILE_DATE forces a build cache refresh for the package upgrades
+ENV DOCKERFILE_DATE=2026-10-30
+
 RUN \
     # Install system dependencies required for the next instructions or debugging.
     # Note: tini is a helper for reaping zombie processes.
