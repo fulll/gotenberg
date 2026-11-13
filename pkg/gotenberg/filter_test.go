@@ -56,6 +56,15 @@ func TestFilterDeadline(t *testing.T) {
 			expectedError: ErrFiltered,
 		},
 		{
+			scenario:      "ErrFiltered (denied, case-insensitive)",
+			allowed:       regexp2.MustCompile("", 0),
+			denied:        regexp2.MustCompile("^file:", 0),
+			s:             "FILE:///etc/passwd",
+			deadline:      time.Now().Add(time.Duration(5) * time.Second),
+			expectError:   true,
+			expectedError: ErrFiltered,
+		},
+		{
 			scenario:    "success",
 			allowed:     regexp2.MustCompile("", 0),
 			denied:      regexp2.MustCompile("", 0),
