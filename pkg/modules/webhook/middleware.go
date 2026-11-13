@@ -193,6 +193,16 @@ func webhookMiddleware(w *Webhook) api.Middleware {
 						client: &retryablehttp.Client{
 							HTTPClient: &http.Client{
 								Timeout: w.clientTimeout,
+								CheckRedirect: func(req *http.Request, via []*http.Request) error {
+									if len(via) >= 10 {
+										return errors.New("stopped after 10 redirects")
+									}
+									allowList, denyList := w.allowList, w.denyList
+									if len(via) > 0 && via[0].URL.String() == webhookErrorUrl {
+										allowList, denyList = w.errorAllowList, w.errorDenyList
+									}
+									return gotenberg.FilterDeadline(allowList, denyList, req.URL.String(), time.Now().Add(w.clientTimeout))
+								},
 							},
 							RetryMax:     w.maxRetry,
 							RetryWaitMin: w.retryMinWait,

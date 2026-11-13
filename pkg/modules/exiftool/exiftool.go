@@ -162,6 +162,10 @@ func (engine *ExifTool) WriteMetadata(ctx context.Context, logger *zap.Logger, m
 	}
 
 	for key, value := range metadata {
+		if err := validateMetadataEntry(key, value); err != nil {
+			return fmt.Errorf("write PDF metadata with ExifTool: %w", err)
+		}
+
 		switch val := value.(type) {
 		case string:
 			fileMetadata[0].SetString(key, val)
@@ -203,6 +207,70 @@ func (engine *ExifTool) WriteMetadata(ctx context.Context, logger *zap.Logger, m
 	return nil
 }
 
+// forbiddenKeys are tags that make ExifTool touch the file system, and
+// ExifTool options that would be read as such instead of as a tag assignment
+// when used as an unprefixed key (e.g., "csv" becomes "-csv=value").
+var forbiddenKeys = []string{
+	"FileName", "Directory", "HardLink", "SymLink",
+	"api", "argfile", "charset", "common_args", "config", "csv", "diff",
+	"echo", "efile", "execute", "ext", "fileorder", "geotag", "geosync",
+	"htmldump", "if", "json", "lang", "listitem", "o", "out", "p", "php",
+	"require", "srcfile", "stay_open", "tagsfromfile", "textout", "use", "w",
+	"wm", "xmlformat",
+}
+
+// validateMetadataEntry rejects keys and values that could inject ExifTool
+// arguments or trigger file system operations.
+func validateMetadataEntry(key string, value any) error {
+	if key == "" || strings.HasPrefix(key, "-") || strings.ContainsAny(key, "\r\n\x00=") {
+		return fmt.Errorf("invalid metadata key %q: %w", key, gotenberg.ErrPdfEngineMetadataValueNotSupported)
+	}
+
+	for _, forbidden := range forbiddenKeys {
+		if strings.EqualFold(key, forbidden) {
+			return fmt.Errorf("forbidden metadata key %q: %w", key, gotenberg.ErrPdfEngineMetadataValueNotSupported)
+		}
+	}
+
+	// Group-prefixed file system tags (e.g., "System:FileName") are as
+	// dangerous as the bare ones.
+	if i := strings.LastIndex(key, ":"); i >= 0 {
+		for _, forbidden := range forbiddenKeys[:4] {
+			if strings.EqualFold(key[i+1:], forbidden) {
+				return fmt.Errorf("forbidden metadata key %q: %w", key, gotenberg.ErrPdfEngineMetadataValueNotSupported)
+			}
+		}
+	}
+
+	check := func(s string) error {
+		if strings.ContainsAny(s, "\r\n\x00") {
+			return fmt.Errorf("invalid metadata value for key %q: %w", key, gotenberg.ErrPdfEngineMetadataValueNotSupported)
+		}
+		return nil
+	}
+
+	switch val := value.(type) {
+	case string:
+		return check(val)
+	case []string:
+		for _, s := range val {
+			if err := check(s); err != nil {
+				return err
+			}
+		}
+	case []any:
+		for _, e := range val {
+			if s, ok := e.(string); ok {
+				if err := check(s); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 // Encrypt is not available in this implementation.
 func (engine *ExifTool) Encrypt(ctx context.Context, logger *zap.Logger, inputPath, userPassword, ownerPassword string) error {
 	return fmt.Errorf("encrypt PDF using ExifTool: %w", gotenberg.ErrPdfEncryptionNotSupported)
@@ -211,6 +279,11 @@ func (engine *ExifTool) Encrypt(ctx context.Context, logger *zap.Logger, inputPa
 // EmbedFiles is not available in this implementation.
 func (engine *ExifTool) EmbedFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
 	return fmt.Errorf("embed files with ExifTool: %w", gotenberg.ErrPdfEngineMethodNotSupported)
+}
+
+// ImportBookmarks is not available in this implementation.
+func (engine *ExifTool) ImportBookmarks(ctx context.Context, logger *zap.Logger, inputPath, inputBookmarksPath, outputPath string) error {
+	return fmt.Errorf("import bookmarks into PDF with ExifTool: %w", gotenberg.ErrPdfEngineMethodNotSupported)
 }
 
 // Interface guards.

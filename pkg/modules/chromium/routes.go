@@ -17,6 +17,7 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/labstack/echo/v4"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu"
 	"go.uber.org/multierr"
 
 	"github.com/gotenberg/gotenberg/v8/pkg/gotenberg"
@@ -289,6 +290,7 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 		preferCssPageSize                                bool
 		generateDocumentOutline                          bool
 		generateTaggedPdf                                bool
+		bookmarks                                        pdfcpu.BookmarkTree
 	)
 
 	form.
@@ -307,7 +309,18 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 		Content("footer.html", &footerTemplate, defaultPdfOptions.FooterTemplate).
 		Bool("preferCssPageSize", &preferCssPageSize, defaultPdfOptions.PreferCssPageSize).
 		Bool("generateDocumentOutline", &generateDocumentOutline, defaultPdfOptions.GenerateDocumentOutline).
-		Bool("generateTaggedPdf", &generateTaggedPdf, defaultPdfOptions.GenerateTaggedPdf)
+		Bool("generateTaggedPdf", &generateTaggedPdf, defaultPdfOptions.GenerateTaggedPdf).
+		Custom("bookmarks", func(value string) error {
+			if len(value) > 0 {
+				err := json.Unmarshal([]byte(value), &bookmarks)
+				if err != nil {
+					return fmt.Errorf("unmarshal bookmarks: %w", err)
+				}
+			} else {
+				bookmarks = defaultPdfOptions.Bookmarks
+			}
+			return nil
+		})
 
 	pdfOptions := PdfOptions{
 		Options:                 options,
@@ -326,6 +339,7 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 		FooterTemplate:          footerTemplate,
 		PreferCssPageSize:       preferCssPageSize,
 		GenerateDocumentOutline: generateDocumentOutline,
+		Bookmarks:               bookmarks,
 		GenerateTaggedPdf:       generateTaggedPdf,
 	}
 
@@ -746,6 +760,22 @@ func convertUrl(ctx *api.Context, chromium Api, engine gotenberg.PdfEngine, url 
 		}
 
 		return fmt.Errorf("convert to PDF: %w", err)
+	}
+
+	if options.GenerateDocumentOutline {
+		if len(options.Bookmarks.Bookmarks) > 0 {
+			bookmarks, errMarshal := json.Marshal(options.Bookmarks)
+			outputBMPath := ctx.GeneratePath(".pdf")
+
+			if errMarshal == nil {
+				outputPath, err = pdfengines.ImportBookmarksStub(ctx, engine, outputPath, bookmarks, outputBMPath)
+				if err != nil {
+					return fmt.Errorf("import bookmarks into PDF err: %w", err)
+				}
+			} else {
+				return fmt.Errorf("import bookmarks into PDF errMarshal : %w", errMarshal)
+			}
+		}
 	}
 
 	outputPaths, err := pdfengines.SplitPdfStub(ctx, engine, mode, []string{outputPath})
