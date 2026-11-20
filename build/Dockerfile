@@ -2,6 +2,8 @@
 # concatenate them. Also, we have to repeat ARG instructions in each build
 # stage that uses them.
 ARG GOLANG_VERSION=1.27.3
+ARG CHROME_VERSION=158.0.8127.36-1
+ARG CHROME_SHA256=4696bce00b128f385a870ba2eb6eede61698f22374ea0d8e09af8a1c6543d397
 
 # ----------------------------------------------
 # pdfcpu binary build stage
@@ -240,6 +242,8 @@ ARG GOTENBERG_VERSION=snapshot
 ARG GOTENBERG_USER_GID=1001
 ARG GOTENBERG_USER_UID=1001
 ARG TMP_CHROMIUM_VERSION_PPC64EL="146.0.7680.80-1~deb13u1"
+ARG CHROME_VERSION
+ARG CHROME_SHA256
 
 LABEL org.opencontainers.image.title="Gotenberg" \
     org.opencontainers.image.description="A Docker-based API for converting documents to PDF." \
@@ -248,10 +252,10 @@ LABEL org.opencontainers.image.title="Gotenberg" \
     org.opencontainers.image.documentation="https://gotenberg.dev" \
     org.opencontainers.image.source="https://github.com/gotenberg/gotenberg"
 
-# Install Chromium.
+# Install Google Chrome on amd64 and Chromium elsewhere.
 # On ppc64el, the latest Chromium is broken, so we pin a known working
 # version from snapshot.debian.org via debsnap.
-RUN /bin/bash -c \
+RUN --mount=type=bind,source=build/install-chrome.sh,target=/usr/local/bin/install-chrome.sh /bin/bash -c \
     'set -e &&\
     if [[ "$(dpkg --print-architecture)" == "ppc64el" ]]; then \
       apt-get update -qq &&\
@@ -261,6 +265,8 @@ RUN /bin/bash -c \
       DEBIAN_FRONTEND=noninteractive apt-get install --fix-broken -y -qq --no-install-recommends "./binary-chromium-common/chromium-common_${TMP_CHROMIUM_VERSION_PPC64EL}_ppc64el.deb" "./binary-chromium/chromium_${TMP_CHROMIUM_VERSION_PPC64EL}_ppc64el.deb" &&\
       DEBIAN_FRONTEND=noninteractive apt-get purge -y -qq devscripts &&\
       rm -rf ./binary-chromium-common/* ./binary-chromium/*; \
+    elif [[ "$(dpkg --print-architecture)" == "amd64" ]]; then \
+      bash /usr/local/bin/install-chrome.sh "$CHROME_VERSION" "$CHROME_SHA256"; \
     else \
       apt-get update -qq &&\
       apt-get upgrade -yqq &&\
@@ -310,6 +316,7 @@ COPY --link --chown="$GOTENBERG_USER_UID:$GOTENBERG_USER_GID" build/chromium-hyp
 #   - AAA Certificate Services D7A7A0FB5D7E2731D771E9484EBCDEF71D5F0C3E0A2948782BC83EE0EA699EF4
 # See https://emudhra.we-have-a-problem.com.
 COPY --link build/chromium-policies /etc/chromium/policies/managed
+COPY --link build/chromium-policies /etc/opt/chrome/policies/managed
 
 ENV CHROMIUM_BIN_PATH=/usr/bin/chromium
 ENV CHROMIUM_HYPHEN_DATA_DIR_PATH=/opt/gotenberg/chromium-hyphen-data
@@ -338,6 +345,8 @@ ARG GOTENBERG_VERSION=snapshot
 ARG GOTENBERG_USER_GID=1001
 ARG GOTENBERG_USER_UID=1001
 ARG TMP_CHROMIUM_VERSION_PPC64EL="146.0.7680.80-1~deb13u1"
+ARG CHROME_VERSION
+ARG CHROME_SHA256
 
 LABEL org.opencontainers.image.title="Gotenberg (Chromium)" \
     org.opencontainers.image.description="A Docker-based API for converting documents to PDF — Chromium variant." \
@@ -346,10 +355,10 @@ LABEL org.opencontainers.image.title="Gotenberg (Chromium)" \
     org.opencontainers.image.documentation="https://gotenberg.dev" \
     org.opencontainers.image.source="https://github.com/gotenberg/gotenberg"
 
-# Install Chromium.
+# Install Google Chrome on amd64 and Chromium elsewhere.
 # On ppc64el, the latest Chromium is broken, so we pin a known working
 # version from snapshot.debian.org via debsnap.
-RUN /bin/bash -c \
+RUN --mount=type=bind,source=build/install-chrome.sh,target=/usr/local/bin/install-chrome.sh /bin/bash -c \
     'set -e &&\
     if [[ "$(dpkg --print-architecture)" == "ppc64el" ]]; then \
       apt-get update -qq &&\
@@ -359,6 +368,8 @@ RUN /bin/bash -c \
       DEBIAN_FRONTEND=noninteractive apt-get install --fix-broken -y -qq --no-install-recommends "./binary-chromium-common/chromium-common_${TMP_CHROMIUM_VERSION_PPC64EL}_ppc64el.deb" "./binary-chromium/chromium_${TMP_CHROMIUM_VERSION_PPC64EL}_ppc64el.deb" &&\
       DEBIAN_FRONTEND=noninteractive apt-get purge -y -qq devscripts &&\
       rm -rf ./binary-chromium-common/* ./binary-chromium/*; \
+    elif [[ "$(dpkg --print-architecture)" == "amd64" ]]; then \
+      bash /usr/local/bin/install-chrome.sh "$CHROME_VERSION" "$CHROME_SHA256"; \
     else \
       apt-get update -qq &&\
       apt-get upgrade -yqq &&\
@@ -385,6 +396,7 @@ COPY --link --chown="$GOTENBERG_USER_UID:$GOTENBERG_USER_GID" build/chromium-hyp
 #   - AAA Certificate Services D7A7A0FB5D7E2731D771E9484EBCDEF71D5F0C3E0A2948782BC83EE0EA699EF4
 # See https://emudhra.we-have-a-problem.com.
 COPY --link build/chromium-policies /etc/chromium/policies/managed
+COPY --link build/chromium-policies /etc/opt/chrome/policies/managed
 
 ENV CHROMIUM_BIN_PATH=/usr/bin/chromium
 ENV CHROMIUM_HYPHEN_DATA_DIR_PATH=/opt/gotenberg/chromium-hyphen-data
