@@ -337,6 +337,7 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 		preferCssPageSize                                bool
 		generateDocumentOutline                          bool
 		generateTaggedPdf                                bool
+		bookmarks                                        []byte
 	)
 
 	form.
@@ -355,7 +356,12 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 		Content("footer.html", &footerTemplate, defaultPdfOptions.FooterTemplate).
 		Bool("preferCssPageSize", &preferCssPageSize, defaultPdfOptions.PreferCssPageSize).
 		Bool("generateDocumentOutline", &generateDocumentOutline, defaultPdfOptions.GenerateDocumentOutline).
-		Bool("generateTaggedPdf", &generateTaggedPdf, defaultPdfOptions.GenerateTaggedPdf)
+		Bool("generateTaggedPdf", &generateTaggedPdf, defaultPdfOptions.GenerateTaggedPdf).
+		Custom("bookmarks", func(value string) error {
+			parsed, err := parseLegacyBookmarks(value)
+			bookmarks = parsed
+			return err
+		})
 
 	pdfOptions := PdfOptions{
 		Options:                 options,
@@ -375,6 +381,7 @@ func FormDataChromiumPdfOptions(ctx *api.Context) (*api.FormData, PdfOptions) {
 		PreferCssPageSize:       preferCssPageSize,
 		GenerateDocumentOutline: generateDocumentOutline,
 		GenerateTaggedPdf:       generateTaggedPdf,
+		bookmarks:               bookmarks,
 	}
 
 	return form, pdfOptions
@@ -942,6 +949,20 @@ func convertUrl(ctx *api.Context, chromium Api, engine gotenberg.PdfEngine, url 
 	err = pdfengines.ValidateFacturXCompat(facturX, facturxXmlPath, pdfFormats)
 	if err != nil {
 		return err
+	}
+
+	if options.GenerateDocumentOutline && len(options.bookmarks) > 0 {
+		importer, ok := engine.(pdfengines.LegacyBookmarkImporter)
+		if !ok {
+			return gotenberg.ErrPdfEngineMethodNotSupported
+		}
+		bookmarkPath := ctx.GeneratePath(".json")
+		if err := os.WriteFile(bookmarkPath, options.bookmarks, 0o600); err != nil {
+			return fmt.Errorf("write bookmark input: %w", err)
+		}
+		if err := importer.ImportChromiumBookmarks(ctx, ctx.Log(), outputPath, bookmarkPath); err != nil {
+			return fmt.Errorf("import Chromium bookmarks: %w", err)
+		}
 	}
 
 	outputPaths, err := pdfengines.SplitPdfStub(ctx, engine, mode, []string{outputPath})

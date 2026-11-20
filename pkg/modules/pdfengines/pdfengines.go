@@ -28,25 +28,26 @@ func init() {
 // the [api.Router] interface to expose relevant PDF processing routes if
 // enabled.
 type PdfEngines struct {
-	mergeNames          []string
-	splitNames          []string
-	flattenNames        []string
-	convertNames        []string
-	optimizeImagesNames []string
-	readMetadataNames   []string
-	writeMetadataNames  []string
-	encryptNames        []string
-	embedNames          []string
-	embedMetadataNames  []string
-	readBookmarksNames  []string
-	writeBookmarksNames []string
-	watermarkNames      []string
-	stampNames          []string
-	rotateNames         []string
-	facturXNames        []string
-	engines             []gotenberg.PdfEngine
-	maxConcurrency      int
-	disableRoutes       bool
+	mergeNames           []string
+	splitNames           []string
+	flattenNames         []string
+	convertNames         []string
+	optimizeImagesNames  []string
+	readMetadataNames    []string
+	writeMetadataNames   []string
+	encryptNames         []string
+	embedNames           []string
+	embedMetadataNames   []string
+	readBookmarksNames   []string
+	writeBookmarksNames  []string
+	importBookmarksNames []string
+	watermarkNames       []string
+	stampNames           []string
+	rotateNames          []string
+	facturXNames         []string
+	engines              []gotenberg.PdfEngine
+	maxConcurrency       int
+	disableRoutes        bool
 }
 
 // Descriptor returns a PdfEngines' module descriptor.
@@ -67,6 +68,7 @@ func (mod *PdfEngines) Descriptor() gotenberg.ModuleDescriptor {
 			fs.StringSlice("pdfengines-embed-metadata-engines", []string{"qpdf"}, "Set the PDF engines and their order for the embed metadata feature - empty means all")
 			fs.StringSlice("pdfengines-read-bookmarks-engines", []string{"pdfcpu"}, "Set the PDF engines and their order for the read bookmarks feature - empty means all")
 			fs.StringSlice("pdfengines-write-bookmarks-engines", []string{"pdfcpu"}, "Set the PDF engines and their order for the write bookmarks feature - empty means all")
+			fs.StringSlice("pdfengines-import-bookmarks-engines", []string{"pdfcpu"}, "Set the PDF engines and their order for Chromium bookmark import - empty means all")
 			fs.StringSlice("pdfengines-watermark-engines", []string{"pdfcpu", "pdftk"}, "Set the PDF engines and their order for the watermark feature - empty means all")
 			fs.StringSlice("pdfengines-stamp-engines", []string{"pdfcpu", "pdftk"}, "Set the PDF engines and their order for the stamp feature - empty means all")
 			fs.StringSlice("pdfengines-rotate-engines", []string{"pdfcpu", "pdftk"}, "Set the PDF engines and their order for the rotate feature - empty means all")
@@ -103,6 +105,7 @@ func (mod *PdfEngines) Provision(ctx *gotenberg.Context) error {
 	embedMetadataNames := flags.MustStringSlice("pdfengines-embed-metadata-engines")
 	readBookmarksNames := flags.MustStringSlice("pdfengines-read-bookmarks-engines")
 	writeBookmarksNames := flags.MustStringSlice("pdfengines-write-bookmarks-engines")
+	importBookmarksNames := flags.MustStringSlice("pdfengines-import-bookmarks-engines")
 	watermarkNames := flags.MustStringSlice("pdfengines-watermark-engines")
 	stampNames := flags.MustStringSlice("pdfengines-stamp-engines")
 	rotateNames := flags.MustStringSlice("pdfengines-rotate-engines")
@@ -200,6 +203,10 @@ func (mod *PdfEngines) Provision(ctx *gotenberg.Context) error {
 	if len(writeBookmarksNames) > 0 {
 		mod.writeBookmarksNames = writeBookmarksNames
 	}
+	mod.importBookmarksNames = defaultNames
+	if len(importBookmarksNames) > 0 {
+		mod.importBookmarksNames = importBookmarksNames
+	}
 
 	mod.watermarkNames = defaultNames
 	if len(watermarkNames) > 0 {
@@ -278,6 +285,7 @@ func (mod *PdfEngines) Validate() error {
 	findNonExistingEngines(mod.embedMetadataNames)
 	findNonExistingEngines(mod.readBookmarksNames)
 	findNonExistingEngines(mod.writeBookmarksNames)
+	findNonExistingEngines(mod.importBookmarksNames)
 	findNonExistingEngines(mod.watermarkNames)
 	findNonExistingEngines(mod.stampNames)
 	findNonExistingEngines(mod.rotateNames)
@@ -306,6 +314,7 @@ func (mod *PdfEngines) SystemMessages() []string {
 		fmt.Sprintf("embed metadata engines - %s", strings.Join(mod.embedMetadataNames, " ")),
 		fmt.Sprintf("read bookmarks engines - %s", strings.Join(mod.readBookmarksNames, " ")),
 		fmt.Sprintf("write bookmarks engines - %s", strings.Join(mod.writeBookmarksNames, " ")),
+		fmt.Sprintf("import Chromium bookmarks engines - %s", strings.Join(mod.importBookmarksNames, " ")),
 		fmt.Sprintf("watermark engines - %s", strings.Join(mod.watermarkNames, " ")),
 		fmt.Sprintf("stamp engines - %s", strings.Join(mod.stampNames, " ")),
 		fmt.Sprintf("rotate engines - %s", strings.Join(mod.rotateNames, " ")),
@@ -330,7 +339,7 @@ func (mod *PdfEngines) PdfEngine() (gotenberg.PdfEngine, error) {
 		return list
 	}
 
-	return newMultiPdfEngines(
+	multi := newMultiPdfEngines(
 		engines(mod.mergeNames),
 		engines(mod.splitNames),
 		engines(mod.flattenNames),
@@ -347,7 +356,9 @@ func (mod *PdfEngines) PdfEngine() (gotenberg.PdfEngine, error) {
 		engines(mod.stampNames),
 		engines(mod.rotateNames),
 		engines(mod.facturXNames),
-	), nil
+	)
+	multi.importBookmarksEngines = engines(mod.importBookmarksNames)
+	return multi, nil
 }
 
 // Routes returns the HTTP routes.

@@ -8,6 +8,35 @@ import (
 	"github.com/gotenberg/gotenberg/v8/pkg/modules/api"
 )
 
+func TestParseLegacyBookmarks(t *testing.T) {
+	tests := []struct {
+		name, input string
+		imports     bool
+		invalid     bool
+	}{
+		{name: "omitted"},
+		{name: "empty", input: `{"Bookmarks":[]}`},
+		{name: "invalid JSON", input: `{"bookmarks":`, invalid: true},
+		{name: "invalid page", input: `{"bookmarks":[{"page":"one"}]}`, invalid: true},
+		{
+			name:    "nested and styled pdfcpu tree",
+			input:   `{"Bookmarks":[{"Title":"Chapter","Page":1,"Bold":true,"Kids":[{"Title":"Section","Page":2}]}]}`,
+			imports: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseLegacyBookmarks(tt.input)
+			if (err != nil) != tt.invalid || (len(got) > 0) != tt.imports {
+				t.Fatalf("parseLegacyBookmarks() = %s, %v", got, err)
+			}
+			if tt.imports && string(got) != tt.input {
+				t.Fatalf("bookmark attributes were changed: %s", got)
+			}
+		})
+	}
+}
+
 // TestHandleChromiumError_Crashed pins the mapping of a Chromium renderer
 // crash to a 503 Service Unavailable. When the renderer crashes mid-conversion,
 // the request must fail fast with 503 rather than hang until the deadline and

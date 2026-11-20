@@ -405,6 +405,18 @@ func (engine *PdfCpu) ReadBookmarks(ctx context.Context, logger *slog.Logger, in
 	return mapBookmarks(data.Bookmarks), nil
 }
 
+func (engine *PdfCpu) ImportChromiumBookmarks(ctx context.Context, logger *slog.Logger, inputPath, bookmarkPath string) error {
+	// Unlike the native writer, the fork's import did not replace an existing outline.
+	cmd, err := gotenberg.CommandContext(ctx, logger, engine.binPath, "bookmarks", "import", "--force", inputPath, bookmarkPath, inputPath)
+	if err != nil {
+		return fmt.Errorf("create bookmark import command: %w", err)
+	}
+	if _, err := cmd.Exec(); err != nil {
+		return fmt.Errorf("import bookmarks with pdfcpu: %w", err)
+	}
+	return nil
+}
+
 // WriteBookmarks adds a document outline (bookmarks) to a PDF file using pdfcpu.
 func (engine *PdfCpu) WriteBookmarks(ctx context.Context, logger *slog.Logger, inputPath string, bookmarks []gotenberg.Bookmark) error {
 	ctx, span := gotenberg.Tracer().Start(ctx, "pdfcpu.WriteBookmarks",

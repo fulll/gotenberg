@@ -14,22 +14,23 @@ import (
 )
 
 type multiPdfEngines struct {
-	mergeEngines          []gotenberg.PdfEngine
-	splitEngines          []gotenberg.PdfEngine
-	flattenEngines        []gotenberg.PdfEngine
-	convertEngines        []gotenberg.PdfEngine
-	optimizeImagesEngines []gotenberg.PdfEngine
-	readMetadataEngines   []gotenberg.PdfEngine
-	writeMetadataEngines  []gotenberg.PdfEngine
-	passwordEngines       []gotenberg.PdfEngine
-	embedEngines          []gotenberg.PdfEngine
-	embedMetadataEngines  []gotenberg.PdfEngine
-	readBookmarksEngines  []gotenberg.PdfEngine
-	writeBookmarksEngines []gotenberg.PdfEngine
-	watermarkEngines      []gotenberg.PdfEngine
-	stampEngines          []gotenberg.PdfEngine
-	rotateEngines         []gotenberg.PdfEngine
-	facturXEngines        []gotenberg.PdfEngine
+	mergeEngines           []gotenberg.PdfEngine
+	splitEngines           []gotenberg.PdfEngine
+	flattenEngines         []gotenberg.PdfEngine
+	convertEngines         []gotenberg.PdfEngine
+	optimizeImagesEngines  []gotenberg.PdfEngine
+	readMetadataEngines    []gotenberg.PdfEngine
+	writeMetadataEngines   []gotenberg.PdfEngine
+	passwordEngines        []gotenberg.PdfEngine
+	embedEngines           []gotenberg.PdfEngine
+	embedMetadataEngines   []gotenberg.PdfEngine
+	readBookmarksEngines   []gotenberg.PdfEngine
+	writeBookmarksEngines  []gotenberg.PdfEngine
+	importBookmarksEngines []gotenberg.PdfEngine
+	watermarkEngines       []gotenberg.PdfEngine
+	stampEngines           []gotenberg.PdfEngine
+	rotateEngines          []gotenberg.PdfEngine
+	facturXEngines         []gotenberg.PdfEngine
 }
 
 func newMultiPdfEngines(
@@ -257,6 +258,25 @@ func (multi *multiPdfEngines) ReadBookmarks(ctx context.Context, logger *slog.Lo
 			return engine.ReadBookmarks(ctx, logger, inputPath)
 		},
 		func(err error) error { return fmt.Errorf("read PDF bookmarks with multi PDF engines: %w", err) },
+	)
+}
+
+// LegacyBookmarkImporter imports the pdfcpu bookmark tree accepted by fulll's
+// Chromium PDF routes. It does not change the native WriteBookmarks contract.
+type LegacyBookmarkImporter interface {
+	ImportChromiumBookmarks(ctx context.Context, logger *slog.Logger, inputPath, bookmarkPath string) error
+}
+
+func (multi *multiPdfEngines) ImportChromiumBookmarks(ctx context.Context, logger *slog.Logger, inputPath, bookmarkPath string) error {
+	return runWithFallbackVoid(ctx, "pdfengines.ImportChromiumBookmarks", multi.importBookmarksEngines,
+		func(ctx context.Context, engine gotenberg.PdfEngine) error {
+			importer, ok := engine.(LegacyBookmarkImporter)
+			if !ok {
+				return gotenberg.ErrPdfEngineMethodNotSupported
+			}
+			return importer.ImportChromiumBookmarks(ctx, logger, inputPath, bookmarkPath)
+		},
+		func(err error) error { return fmt.Errorf("import Chromium bookmarks with multi PDF engines: %w", err) },
 	)
 }
 

@@ -266,6 +266,7 @@ func DefaultOptions() Options {
 
 // PdfOptions are the available options for converting an HTML document to PDF.
 type PdfOptions struct {
+	bookmarks []byte
 	Options
 
 	// Landscape sets the paper orientation.
