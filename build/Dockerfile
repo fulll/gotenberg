@@ -1,7 +1,7 @@
 # ARG instructions do not create additional layers. Instead, next layers will
 # concatenate them. Also, we have to repeat ARG instructions in each build
 # stage that uses them.
-ARG GOLANG_VERSION=1.27.1
+ARG GOLANG_VERSION=1.27.4
 ARG CHROME_VERSION=156.0.8078.79-1
 
 # ----------------------------------------------
@@ -12,7 +12,7 @@ ARG CHROME_VERSION=156.0.8078.79-1
 FROM golang:$GOLANG_VERSION AS pdfcpu-binary-stage
 
 # See https://github.com/pdfcpu/pdfcpu/releases.
-ARG PDFCPU_VERSION=v0.11.1
+ARG PDFCPU_VERSION=v0.16.3
 ENV CGO_ENABLED=0
 
 # Define the working directory outside of $GOPATH (we're using go modules).
@@ -25,7 +25,7 @@ RUN curl -Ls "https://github.com/pdfcpu/pdfcpu/archive/refs/tags/$PDFCPU_VERSION
 RUN go mod download &&\
     go mod verify
 
-RUN go build -o pdfcpu -ldflags "-s -w -X 'main.version=$PDFCPU_VERSION' -X 'github.com/pdfcpu/pdfcpu/pkg/pdfcpu.VersionStr=$PDFCPU_VERSION' -X main.builtBy=gotenberg" ./cmd/pdfcpu &&\
+RUN go build -o pdfcpu -ldflags "-s -w -X 'main.version=$PDFCPU_VERSION' -X 'github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model.VersionStr=$PDFCPU_VERSION' -X main.builtBy=gotenberg" ./cmd/pdfcpu &&\
     # Verify installation.
     ./pdfcpu version
 
@@ -59,7 +59,7 @@ RUN go build -o gotenberg -ldflags "-s -w -X 'github.com/gotenberg/gotenberg/v8/
 FROM debian:13-slim@sha256:f6b08b09a05725f9431502d3b5714f5c4576e82c1a84fa1debe0c24a7e0c3ec4 AS custom-jre-stage
 
 # Setting DOCKERFILE_DATE forces a build cache refresh for the package upgrades
-ENV DOCKERFILE_DATE=2026-08-25
+ENV DOCKERFILE_DATE=2026-11-06
 
 RUN \
     apt-get update -qq &&\
@@ -123,7 +123,7 @@ RUN \
     chown gotenberg: /home/gotenberg
 
 # Setting DOCKERFILE_DATE forces a build cache refresh for the package upgrades
-ENV DOCKERFILE_DATE=2026-10-30
+ENV DOCKERFILE_DATE=2026-11-06
 
 RUN \
     # Install system dependencies required for the next instructions or debugging.

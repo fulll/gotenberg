@@ -1,6 +1,6 @@
 module github.com/gotenberg/gotenberg/v8
 
-go 1.26.1
+go 1.27.4
 
 require (
 	github.com/alexliesenfeld/health v0.8.1

@@ -219,7 +219,14 @@ func newContext(echoCtx echo.Context, logger *zap.Logger, fs *gotenberg.FileSyst
 					)
 				}
 
-				err := gotenberg.FilterDeadline(downloadFromCfg.allowList, downloadFromCfg.denyList, dl.Url, deadline)
+				err := gotenberg.FilterOutboundURL(
+					ctx,
+					dl.Url,
+					downloadFromCfg.allowList,
+					downloadFromCfg.denyList,
+					deadline,
+					gotenberg.WithDenyPrivateIPs(downloadFromCfg.denyPrivateIPs),
+				)
 				if err != nil {
 					return fmt.Errorf("filter URL: %w", err)
 				}
@@ -237,16 +244,28 @@ func newContext(echoCtx echo.Context, logger *zap.Logger, fs *gotenberg.FileSyst
 				}
 				req.Header.Set(traceHeader, trace)
 
+				httpClient := gotenberg.NewOutboundHTTPClient(
+					time.Until(deadline),
+					downloadFromCfg.allowList,
+					downloadFromCfg.denyList,
+					gotenberg.WithDenyPrivateIPs(downloadFromCfg.denyPrivateIPs),
+				)
+				httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+					if len(via) >= 10 {
+						return errors.New("stopped after 10 redirects")
+					}
+					return gotenberg.FilterOutboundURL(
+						req.Context(),
+						req.URL.String(),
+						downloadFromCfg.allowList,
+						downloadFromCfg.denyList,
+						deadline,
+						gotenberg.WithDenyPrivateIPs(downloadFromCfg.denyPrivateIPs),
+					)
+				}
+
 				client := &retryablehttp.Client{
-					HTTPClient: &http.Client{
-						Timeout: time.Until(deadline),
-						CheckRedirect: func(req *http.Request, via []*http.Request) error {
-							if len(via) >= 10 {
-								return errors.New("stopped after 10 redirects")
-							}
-							return gotenberg.FilterDeadline(downloadFromCfg.allowList, downloadFromCfg.denyList, req.URL.String(), deadline)
-						},
-					},
+					HTTPClient:   httpClient,
 					RetryMax:     downloadFromCfg.maxRetry,
 					RetryWaitMin: time.Duration(1) * time.Second,
 					RetryWaitMax: time.Until(deadline),

@@ -55,10 +55,11 @@ type Api struct {
 }
 
 type downloadFromConfig struct {
-	allowList *regexp2.Regexp
-	denyList  *regexp2.Regexp
-	maxRetry  int
-	disable   bool
+	allowList      *regexp2.Regexp
+	denyList       *regexp2.Regexp
+	denyPrivateIPs bool
+	maxRetry       int
+	disable        bool
 }
 
 // Router is a module interface that adds routes to the [Api].
@@ -194,6 +195,7 @@ func (a *Api) Descriptor() gotenberg.ModuleDescriptor {
 			fs.Bool("api-enable-basic-auth", false, "Enable basic authentication - will look for the GOTENBERG_API_BASIC_AUTH_USERNAME and GOTENBERG_API_BASIC_AUTH_PASSWORD environment variables")
 			fs.String("api-download-from-allow-list", "", "Set the allowed URLs for the download from feature using a regular expression")
 			fs.String("api-download-from-deny-list", "", "Set the denied URLs for the download from feature using a regular expression")
+			fs.Bool("api-download-from-deny-private-ips", false, "Reject downloadFrom URLs that resolve to non-public IP addresses")
 			fs.Int("api-download-from-max-retry", 4, "Set the maximum number of retries for the download from feature")
 			fs.Bool("api-disable-download-from", false, "Disable the download from feature")
 			fs.Bool("api-disable-health-check-logging", false, "Disable health check logging")
@@ -217,10 +219,11 @@ func (a *Api) Provision(ctx *gotenberg.Context) error {
 	a.rootPath = flags.MustString("api-root-path")
 	a.traceHeader = flags.MustString("api-trace-header")
 	a.downloadFromCfg = downloadFromConfig{
-		allowList: flags.MustRegexp("api-download-from-allow-list"),
-		denyList:  flags.MustRegexp("api-download-from-deny-list"),
-		maxRetry:  flags.MustInt("api-download-from-max-retry"),
-		disable:   flags.MustBool("api-disable-download-from"),
+		allowList:      flags.MustRegexp("api-download-from-allow-list"),
+		denyList:       flags.MustRegexp("api-download-from-deny-list"),
+		denyPrivateIPs: flags.MustBool("api-download-from-deny-private-ips"),
+		maxRetry:       flags.MustInt("api-download-from-max-retry"),
+		disable:        flags.MustBool("api-disable-download-from"),
 	}
 	a.disableHealthCheckLogging = flags.MustBool("api-disable-health-check-logging")
 	a.enableDebugRoute = flags.MustBool("api-enable-debug-route")

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -59,6 +60,17 @@ func (p *libreOfficeProcess) Start(logger *zap.Logger) error {
 	}
 
 	userProfileDirPath := p.fs.NewDirPath()
+	if err := writeSofficeProfileConfig(userProfileDirPath); err != nil {
+		removeErr := os.RemoveAll(userProfileDirPath)
+		if removeErr != nil {
+			return errors.Join(
+				fmt.Errorf("write LibreOffice profile config: %w", err),
+				fmt.Errorf("remove LibreOffice's user profile directory: %w", removeErr),
+			)
+		}
+		return fmt.Errorf("write LibreOffice profile config: %w", err)
+	}
+
 	args := []string{
 		"--headless",
 		"--invisible",
@@ -177,6 +189,26 @@ func (p *libreOfficeProcess) Start(logger *zap.Logger) error {
 			return fmt.Errorf("LibreOffice process exited: %w", err)
 		}
 	}
+}
+
+const sofficeProfileConfig = `<?xml version="1.0" encoding="UTF-8"?>
+<oor:items xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="BlockUntrustedRefererLinks" oor:op="fuse"><value>true</value></prop></item>
+</oor:items>
+`
+
+func writeSofficeProfileConfig(userProfileDirPath string) error {
+	userDirPath := filepath.Join(userProfileDirPath, "user")
+	if err := os.MkdirAll(userDirPath, 0o755); err != nil {
+		return fmt.Errorf("create LibreOffice user profile directory: %w", err)
+	}
+
+	err := os.WriteFile(filepath.Join(userDirPath, "registrymodifications.xcu"), []byte(sofficeProfileConfig), 0o600)
+	if err != nil {
+		return fmt.Errorf("write registrymodifications.xcu: %w", err)
+	}
+
+	return nil
 }
 
 func (p *libreOfficeProcess) Stop(logger *zap.Logger) error {

@@ -107,14 +107,14 @@ func (engine *PdfCpu) Split(ctx context.Context, logger *zap.Logger, mode gotenb
 
 	switch mode.Mode {
 	case gotenberg.SplitModeIntervals:
-		args = append(args, "split", "-mode", "span", inputPath, outputDirPath, mode.Span)
+		args = append(args, "split", "--mode", "span", inputPath, outputDirPath, mode.Span)
 	case gotenberg.SplitModePages:
 		if mode.Unify {
 			outputPath := fmt.Sprintf("%s/%s", outputDirPath, filepath.Base(inputPath))
-			args = append(args, "trim", "-pages", mode.Span, inputPath, outputPath)
+			args = append(args, "trim", "--pages", mode.Span, inputPath, outputPath)
 			break
 		}
-		args = append(args, "extract", "-mode", "page", "-pages", mode.Span, inputPath, outputDirPath)
+		args = append(args, "extract", "--mode", "page", "--pages", mode.Span, inputPath, outputDirPath)
 	default:
 		return nil, fmt.Errorf("split PDFs using mode '%s' with pdfcpu: %w", mode.Mode, gotenberg.ErrPdfSplitModeNotSupported)
 	}
@@ -207,12 +207,14 @@ func (engine *PdfCpu) Encrypt(ctx context.Context, logger *zap.Logger, inputPath
 		ownerPassword = userPassword
 	}
 
-	args := make([]string, 0, 11)
+	args := make([]string, 0, 12)
 	args = append(args, "encrypt")
-	args = append(args, "-mode", "aes")
-	args = append(args, "-upw", userPassword)
-	args = append(args, "-opw", ownerPassword)
-	args = append(args, "-perm", "all")
+	// pdfcpu refuses to overwrite an existing file without --force.
+	args = append(args, "--force")
+	args = append(args, "--mode", "aes")
+	args = append(args, "--upw", userPassword)
+	args = append(args, "--opw", ownerPassword)
+	args = append(args, "--perm", "all")
 	args = append(args, inputPath, inputPath)
 
 	cmd, err := gotenberg.CommandContext(ctx, logger, engine.binPath, args...)

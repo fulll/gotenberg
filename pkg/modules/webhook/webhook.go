@@ -23,6 +23,7 @@ type Webhook struct {
 	denyList       *regexp2.Regexp
 	errorAllowList *regexp2.Regexp
 	errorDenyList  *regexp2.Regexp
+	denyPrivateIPs bool
 	maxRetry       int
 	retryMinWait   time.Duration
 	retryMaxWait   time.Duration
@@ -42,6 +43,7 @@ func (w *Webhook) Descriptor() gotenberg.ModuleDescriptor {
 			fs.String("webhook-deny-list", "", "Set the denied URLs for the webhook feature using a regular expression")
 			fs.String("webhook-error-allow-list", "", "Set the allowed URLs in case of an error for the webhook feature using a regular expression")
 			fs.String("webhook-error-deny-list", "", "Set the denied URLs in case of an error for the webhook feature using a regular expression")
+			fs.Bool("webhook-deny-private-ips", false, "Reject webhook URLs that resolve to non-public IP addresses")
 			fs.Int("webhook-max-retry", 4, "Set the maximum number of retries for the webhook feature")
 			fs.Duration("webhook-retry-min-wait", time.Duration(1)*time.Second, "Set the minimum duration to wait before trying to call the webhook again")
 			fs.Duration("webhook-retry-max-wait", time.Duration(30)*time.Second, "Set the maximum duration to wait before trying to call the webhook again")
@@ -62,6 +64,7 @@ func (w *Webhook) Provision(ctx *gotenberg.Context) error {
 	w.denyList = flags.MustRegexp("webhook-deny-list")
 	w.errorAllowList = flags.MustRegexp("webhook-error-allow-list")
 	w.errorDenyList = flags.MustRegexp("webhook-error-deny-list")
+	w.denyPrivateIPs = flags.MustBool("webhook-deny-private-ips")
 	w.maxRetry = flags.MustInt("webhook-max-retry")
 	w.retryMinWait = flags.MustDuration("webhook-retry-min-wait")
 	w.retryMaxWait = flags.MustDuration("webhook-retry-max-wait")
