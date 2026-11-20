@@ -21,8 +21,9 @@ type client struct {
 	extraHttpHeaders map[string]string
 	startTime        time.Time
 
-	client *retryablehttp.Client
-	logger *zap.Logger
+	client      *retryablehttp.Client
+	errorClient *retryablehttp.Client
+	logger      *zap.Logger
 }
 
 // send call the webhook either to send the success response or the error response.
@@ -73,7 +74,12 @@ func (c client) send(body io.Reader, headers map[string]string, errored bool) er
 		req.Header.Set(key, value)
 	}
 
-	resp, err := c.client.Do(req)
+	httpClient := c.client
+	if errored && c.errorClient != nil {
+		httpClient = c.errorClient
+	}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("send '%s' request to '%s': %w", method, url, err)
 	}

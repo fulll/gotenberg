@@ -29,6 +29,7 @@ GOTENBERG_API_BASIC_AUTH_PASSWORD=
 API-DOWNLOAD-FROM-ALLOW-LIST=
 API-DOWNLOAD-FROM-DENY-LIST=
 API-DOWNLOAD-FROM-FROM-MAX-RETRY=4
+API-DOWNLOAD-FROM-DENY-PRIVATE-IPS=false
 API-DISABLE-DOWNLOAD-FROM=false
 API_DISABLE_HEALTH_CHECK_LOGGING=false
 API_ENABLE_DEBUG_ROUTE=false
@@ -81,6 +82,7 @@ WEBHOOK_MAX_RETRY=4
 WEBHOOK_RETRY_MIN_WAIT=1s
 WEBHOOK_RETRY_MAX_WAIT=30s
 WEBHOOK_CLIENT_TIMEOUT=30s
+WEBHOOK_DENY_PRIVATE_IPS=false
 WEBHOOK_DISABLE=false
 
 .PHONY: run
@@ -107,6 +109,7 @@ run: ## Start a Gotenberg container
 	--api-download-from-allow-list=$(API-DOWNLOAD-FROM-ALLOW-LIST) \
 	--api-download-from-deny-list=$(API-DOWNLOAD-FROM-DENY-LIST) \
 	--api-download-from-max-retry=$(API-DOWNLOAD-FROM-FROM-MAX-RETRY) \
+	--api-download-from-deny-private-ips=$(API-DOWNLOAD-FROM-DENY-PRIVATE-IPS) \
 	--api-disable-download-from=$(API-DISABLE-DOWNLOAD-FROM) \
 	--api-disable-health-check-logging=$(API_DISABLE_HEALTH_CHECK_LOGGING) \
 	--api-enable-debug-route=$(API_ENABLE_DEBUG_ROUTE) \
@@ -159,6 +162,7 @@ run: ## Start a Gotenberg container
 	--webhook-retry-min-wait=$(WEBHOOK_RETRY_MIN_WAIT) \
 	--webhook-retry-max-wait=$(WEBHOOK_RETRY_MAX_WAIT) \
 	--webhook-client-timeout=$(WEBHOOK_CLIENT_TIMEOUT) \
+	--webhook-deny-private-ips=$(WEBHOOK_DENY_PRIVATE_IPS) \
 	--webhook-disable=$(WEBHOOK_DISABLE)
 
 .PHONY: test-unit

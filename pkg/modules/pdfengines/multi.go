@@ -12,14 +12,14 @@ import (
 )
 
 type multiPdfEngines struct {
-	mergeEngines         []gotenberg.PdfEngine
-	splitEngines         []gotenberg.PdfEngine
-	flattenEngines       []gotenberg.PdfEngine
-	convertEngines       []gotenberg.PdfEngine
-	readMetadataEngines  []gotenberg.PdfEngine
-	writeMetadataEngines []gotenberg.PdfEngine
-	passwordEngines      []gotenberg.PdfEngine
-	embedEngines         []gotenberg.PdfEngine
+	mergeEngines           []gotenberg.PdfEngine
+	splitEngines           []gotenberg.PdfEngine
+	flattenEngines         []gotenberg.PdfEngine
+	convertEngines         []gotenberg.PdfEngine
+	readMetadataEngines    []gotenberg.PdfEngine
+	writeMetadataEngines   []gotenberg.PdfEngine
+	passwordEngines        []gotenberg.PdfEngine
+	embedEngines           []gotenberg.PdfEngine
 	importBookmarksEngines []gotenberg.PdfEngine
 }
 

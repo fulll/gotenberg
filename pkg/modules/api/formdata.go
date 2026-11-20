@@ -443,7 +443,7 @@ func (form *FormData) mustValue(key string, target any, defaultValue any) *FormD
 	val, ok := form.values[key]
 
 	if !ok || val[0] == "" {
-		switch t := (target).(type) {
+		switch t := target.(type) {
 		case *string:
 			*t = defaultValue.(string)
 		case *bool:
@@ -490,7 +490,7 @@ func (form *FormData) mustMandatoryField(key string, target any) *FormData {
 func (form *FormData) mustAssign(key, value string, target any) *FormData {
 	var err error
 
-	switch t := (target).(type) {
+	switch t := target.(type) {
 	case *string:
 		*t = value
 	case *bool:
