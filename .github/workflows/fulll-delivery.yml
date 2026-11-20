@@ -1,0 +1,40 @@
+name: fulll Continuous Delivery
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  release_amd64:
+    if: github.repository == 'fulll/gotenberg'
+    name: Release linux/amd64 to ECR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to ECR
+        env:
+          AWS_CREDENTIALS: ${{ secrets.STAGING_AWS_CREDENTIALS }}
+          AWS_ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          export AWS_SHARED_CREDENTIALS_FILE
+          AWS_SHARED_CREDENTIALS_FILE=$(mktemp)
+          trap 'rm -f "$AWS_SHARED_CREDENTIALS_FILE"' EXIT
+          printf '%s\n' "$AWS_CREDENTIALS" > "$AWS_SHARED_CREDENTIALS_FILE"
+          aws --region eu-central-1 ecr get-login-password |
+            docker login --username AWS --password-stdin "$AWS_ECR_REGISTRY"
+
+      - name: Build and publish the Cloud Run image
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          AWS_ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+        run: bash build/fulll-release.sh --push
