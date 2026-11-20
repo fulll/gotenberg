@@ -188,6 +188,11 @@ func (engine *PdfTk) EmbedFiles(ctx context.Context, logger *zap.Logger, filePat
 	return fmt.Errorf("embed files with PDFtk: %w", gotenberg.ErrPdfEngineMethodNotSupported)
 }
 
+// ImportBookmarks is not available in this implementation.
+func (engine *PdfTk) ImportBookmarks(ctx context.Context, logger *zap.Logger, inputPath, inputBookmarksPath, outputPath string) error {
+	return fmt.Errorf("import bookmarks into PDF with PDFtk: %w", gotenberg.ErrPdfEngineMethodNotSupported)
+}
+
 // Interface guards.
 var (
 	_ gotenberg.Module      = (*PdfTk)(nil)

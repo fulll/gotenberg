@@ -61,8 +61,7 @@ func ParseError(err error) (int, string) {
 		return http.StatusBadRequest, "At least one PDF engine cannot process the requested metadata, while others may have failed to convert due to different issues"
 	}
 
-	var invalidArgsError *gotenberg.PdfEngineInvalidArgsError
-	if errors.As(err, &invalidArgsError) {
+	if invalidArgsError, ok := errors.AsType[*gotenberg.PdfEngineInvalidArgsError](err); ok {
 		return http.StatusBadRequest, invalidArgsError.Error()
 	}
 

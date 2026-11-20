@@ -1,7 +1,8 @@
 # ARG instructions do not create additional layers. Instead, next layers will
 # concatenate them. Also, we have to repeat ARG instructions in each build
 # stage that uses them.
-ARG GOLANG_VERSION=1.26.0
+ARG GOLANG_VERSION=1.27.4
+ARG CHROME_VERSION=156.0.8078.79-1
 
 # ----------------------------------------------
 # pdfcpu binary build stage
@@ -11,7 +12,7 @@ ARG GOLANG_VERSION=1.26.0
 FROM golang:$GOLANG_VERSION AS pdfcpu-binary-stage
 
 # See https://github.com/pdfcpu/pdfcpu/releases.
-ARG PDFCPU_VERSION=v0.11.1
+ARG PDFCPU_VERSION=v0.16.3
 ENV CGO_ENABLED=0
 
 # Define the working directory outside of $GOPATH (we're using go modules).
@@ -24,7 +25,7 @@ RUN curl -Ls "https://github.com/pdfcpu/pdfcpu/archive/refs/tags/$PDFCPU_VERSION
 RUN go mod download &&\
     go mod verify
 
-RUN go build -o pdfcpu -ldflags "-s -w -X 'main.version=$PDFCPU_VERSION' -X 'github.com/pdfcpu/pdfcpu/pkg/pdfcpu.VersionStr=$PDFCPU_VERSION' -X main.builtBy=gotenberg" ./cmd/pdfcpu &&\
+RUN go build -o pdfcpu -ldflags "-s -w -X 'main.version=$PDFCPU_VERSION' -X 'github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model.VersionStr=$PDFCPU_VERSION' -X main.builtBy=gotenberg" ./cmd/pdfcpu &&\
     # Verify installation.
     ./pdfcpu version
 
@@ -55,7 +56,10 @@ RUN go build -o gotenberg -ldflags "-s -w -X 'github.com/gotenberg/gotenberg/v8/
 # Custom JRE stage
 # Credits: https://github.com/jodconverter/docker-image-jodconverter-runtime
 # ----------------------------------------------
-FROM debian:13-slim AS custom-jre-stage
+FROM debian:13-slim@sha256:f6b08b09a05725f9431502d3b5714f5c4576e82c1a84fa1debe0c24a7e0c3ec4 AS custom-jre-stage
+
+# Setting DOCKERFILE_DATE forces a build cache refresh for the package upgrades
+ENV DOCKERFILE_DATE=2026-11-06
 
 RUN \
     apt-get update -qq &&\
@@ -77,10 +81,13 @@ RUN jlink \
 # ----------------------------------------------
 # Base image stage
 # ----------------------------------------------
-FROM debian:13-slim AS base-image-stage
+FROM debian:13-slim@sha256:f6b08b09a05725f9431502d3b5714f5c4576e82c1a84fa1debe0c24a7e0c3ec4 AS base-image-stage
 
 ARG TIMEZONE=UTC
 ENV TZ=$TIMEZONE
+
+# Setting DOCKERFILE_DATE forces a build cache refresh for the package upgrades
+ENV DOCKERFILE_DATE=2026-08-25
 
 COPY --from=custom-jre-stage /custom-jre /opt/java
 
@@ -94,6 +101,7 @@ FROM base-image-stage
 ARG GOTENBERG_VERSION=snapshot
 ARG GOTENBERG_USER_GID=1001
 ARG GOTENBERG_USER_UID=1001
+ARG CHROME_VERSION
 # See https://github.com/googlefonts/noto-emoji/releases.
 ARG NOTO_COLOR_EMOJI_VERSION=v2.051
 # See https://gitlab.com/pdftk-java/pdftk/-/releases - Binary package.
@@ -113,6 +121,9 @@ RUN \
     useradd --uid "$GOTENBERG_USER_UID" --gid gotenberg --shell /bin/bash --home /home/gotenberg --no-create-home gotenberg &&\
     mkdir /home/gotenberg &&\
     chown gotenberg: /home/gotenberg
+
+# Setting DOCKERFILE_DATE forces a build cache refresh for the package upgrades
+ENV DOCKERFILE_DATE=2026-11-06
 
 RUN \
     # Install system dependencies required for the next instructions or debugging.
@@ -194,9 +205,30 @@ RUN \
 
 RUN \
     # Install Chromium.
-    apt-get update -qq &&\
-    apt-get upgrade -yqq &&\
-    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends chromium &&\
+    /bin/bash -c \
+    'set -e &&\
+    if [[ "$(dpkg --print-architecture)" == "amd64" ]]; then \
+      apt-get update -qq &&\
+      if [ -z "$CHROME_VERSION" ]; then \
+        # Install latest stable version (use gpg dearmor instead of apt-key)
+        curl -fsSL https://dl.google.com/linux/linux_signing_key.pub -o /usr/share/keyrings/google-linux-signing-keyring.gpg &&\
+        echo "deb [signed-by=/usr/share/keyrings/google-linux-signing-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | tee /etc/apt/sources.list.d/google-chrome.list &&\
+        apt-get update -qq &&\
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends --allow-unauthenticated google-chrome-stable &&\
+        mv /usr/bin/google-chrome-stable /usr/bin/chromium; \
+      else \
+        # Install specific version
+        apt-get update -qq &&\
+        curl -fsSL --output /tmp/chrome.deb "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb" &&\
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends /tmp/chrome.deb &&\
+        mv /usr/bin/google-chrome-stable /usr/bin/chromium &&\
+        rm -rf /tmp/chrome.deb; \
+      fi \
+    elif [[ "$(dpkg --print-architecture)" == "armhf" ]]; then \
+      apt-get update -qq &&\
+      apt-get upgrade -yqq &&\
+      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends chromium; \
+    fi' &&\
     # Verify installation.
     chromium --version &&\
     # Cleanup.

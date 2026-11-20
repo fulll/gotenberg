@@ -219,7 +219,14 @@ func newContext(echoCtx echo.Context, logger *zap.Logger, fs *gotenberg.FileSyst
 					)
 				}
 
-				err := gotenberg.FilterDeadline(downloadFromCfg.allowList, downloadFromCfg.denyList, dl.Url, deadline)
+				err := gotenberg.FilterOutboundURL(
+					ctx,
+					dl.Url,
+					downloadFromCfg.allowList,
+					downloadFromCfg.denyList,
+					deadline,
+					gotenberg.WithDenyPrivateIPs(downloadFromCfg.denyPrivateIPs),
+				)
 				if err != nil {
 					return fmt.Errorf("filter URL: %w", err)
 				}
@@ -237,10 +244,28 @@ func newContext(echoCtx echo.Context, logger *zap.Logger, fs *gotenberg.FileSyst
 				}
 				req.Header.Set(traceHeader, trace)
 
+				httpClient := gotenberg.NewOutboundHTTPClient(
+					time.Until(deadline),
+					downloadFromCfg.allowList,
+					downloadFromCfg.denyList,
+					gotenberg.WithDenyPrivateIPs(downloadFromCfg.denyPrivateIPs),
+				)
+				httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+					if len(via) >= 10 {
+						return errors.New("stopped after 10 redirects")
+					}
+					return gotenberg.FilterOutboundURL(
+						req.Context(),
+						req.URL.String(),
+						downloadFromCfg.allowList,
+						downloadFromCfg.denyList,
+						deadline,
+						gotenberg.WithDenyPrivateIPs(downloadFromCfg.denyPrivateIPs),
+					)
+				}
+
 				client := &retryablehttp.Client{
-					HTTPClient: &http.Client{
-						Timeout: time.Until(deadline),
-					},
+					HTTPClient:   httpClient,
 					RetryMax:     downloadFromCfg.maxRetry,
 					RetryWaitMin: time.Duration(1) * time.Second,
 					RetryWaitMax: time.Until(deadline),
@@ -300,7 +325,7 @@ func newContext(echoCtx echo.Context, logger *zap.Logger, fs *gotenberg.FileSyst
 				// Avoid directory traversal and make sure filename characters are
 				// normalized.
 				// See: https://github.com/gotenberg/gotenberg/issues/662.
-				filename = norm.NFC.String(filepath.Base(filename))
+				filename = sanitizeFilename(filename)
 				path := fmt.Sprintf("%s/%s", ctx.dirPath, filename)
 
 				out, err := os.Create(path)
@@ -356,7 +381,7 @@ func newContext(echoCtx echo.Context, logger *zap.Logger, fs *gotenberg.FileSyst
 		// Avoid directory traversal and make sure filename characters are
 		// normalized.
 		// See: https://github.com/gotenberg/gotenberg/issues/662.
-		filename := norm.NFC.String(filepath.Base(fh.Filename))
+		filename := sanitizeFilename(fh.Filename)
 		path := fmt.Sprintf("%s/%s", ctx.dirPath, filename)
 
 		out, err := os.Create(path)
@@ -388,7 +413,7 @@ func newContext(echoCtx echo.Context, logger *zap.Logger, fs *gotenberg.FileSyst
 				return ctx, cancel, fmt.Errorf("copy to disk: %w", err)
 			}
 			// Track files by field name
-			filename := norm.NFC.String(filepath.Base(fh.Filename))
+			filename := sanitizeFilename(fh.Filename)
 			filePath := ctx.files[filename]
 			ctx.filesByField[fieldName] = append(ctx.filesByField[fieldName], filePath)
 		}
@@ -400,6 +425,22 @@ func newContext(echoCtx echo.Context, logger *zap.Logger, fs *gotenberg.FileSyst
 	ctx.Log().Debug(fmt.Sprintf("total bytes: %d", totalBytesRead.Load()))
 
 	return ctx, cancel, err
+}
+
+// sanitizeFilename strips path separators (including backslashes, which
+// [filepath.Base] ignores on Linux) and control characters from a
+// caller-supplied filename, then NFC-normalizes the result.
+func sanitizeFilename(name string) string {
+	if i := strings.LastIndexAny(name, `/\`); i >= 0 {
+		name = name[i+1:]
+	}
+	name = strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return -1
+		}
+		return r
+	}, name)
+	return norm.NFC.String(name)
 }
 
 // Request returns the [http.Request].

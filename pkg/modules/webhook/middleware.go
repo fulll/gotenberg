@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dlclark/regexp2"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/labstack/echo/v4"
 
@@ -114,12 +115,26 @@ func webhookMiddleware(w *Webhook) api.Middleware {
 
 					// Let's check if the webhook URLs are acceptable according to our
 					// allowed/denied lists.
-					err := gotenberg.FilterDeadline(w.allowList, w.denyList, webhookUrl, deadline)
+					err := gotenberg.FilterOutboundURL(
+						ctx,
+						webhookUrl,
+						w.allowList,
+						w.denyList,
+						deadline,
+						gotenberg.WithDenyPrivateIPs(w.denyPrivateIPs),
+					)
 					if err != nil {
 						return fmt.Errorf("filter webhook URL: %w", err)
 					}
 
-					err = gotenberg.FilterDeadline(w.errorAllowList, w.errorDenyList, webhookErrorUrl, deadline)
+					err = gotenberg.FilterOutboundURL(
+						ctx,
+						webhookErrorUrl,
+						w.errorAllowList,
+						w.errorDenyList,
+						deadline,
+						gotenberg.WithDenyPrivateIPs(w.denyPrivateIPs),
+					)
 					if err != nil {
 						return fmt.Errorf("filter webhook error URL: %w", err)
 					}
@@ -182,6 +197,38 @@ func webhookMiddleware(w *Webhook) api.Middleware {
 					traceHeader := c.Get("traceHeader").(string)
 					trace := c.Get("trace").(string)
 
+					newRetryableClient := func(allowList, denyList *regexp2.Regexp) *retryablehttp.Client {
+						httpClient := gotenberg.NewOutboundHTTPClient(
+							w.clientTimeout,
+							allowList,
+							denyList,
+							gotenberg.WithDenyPrivateIPs(w.denyPrivateIPs),
+						)
+						httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+							if len(via) >= 10 {
+								return errors.New("stopped after 10 redirects")
+							}
+							return gotenberg.FilterOutboundURL(
+								req.Context(),
+								req.URL.String(),
+								allowList,
+								denyList,
+								time.Now().Add(w.clientTimeout),
+								gotenberg.WithDenyPrivateIPs(w.denyPrivateIPs),
+							)
+						}
+
+						return &retryablehttp.Client{
+							HTTPClient:   httpClient,
+							RetryMax:     w.maxRetry,
+							RetryWaitMin: w.retryMinWait,
+							RetryWaitMax: w.retryMaxWait,
+							Logger:       gotenberg.NewLeveledLogger(ctx.Log()),
+							CheckRetry:   retryablehttp.DefaultRetryPolicy,
+							Backoff:      retryablehttp.DefaultBackoff,
+						}
+					}
+
 					client := &client{
 						url:              webhookUrl,
 						method:           webhookMethod,
@@ -190,18 +237,9 @@ func webhookMiddleware(w *Webhook) api.Middleware {
 						extraHttpHeaders: extraHttpHeaders,
 						startTime:        startTime,
 
-						client: &retryablehttp.Client{
-							HTTPClient: &http.Client{
-								Timeout: w.clientTimeout,
-							},
-							RetryMax:     w.maxRetry,
-							RetryWaitMin: w.retryMinWait,
-							RetryWaitMax: w.retryMaxWait,
-							Logger:       gotenberg.NewLeveledLogger(ctx.Log()),
-							CheckRetry:   retryablehttp.DefaultRetryPolicy,
-							Backoff:      retryablehttp.DefaultBackoff,
-						},
-						logger: ctx.Log(),
+						client:      newRetryableClient(w.allowList, w.denyList),
+						errorClient: newRetryableClient(w.errorAllowList, w.errorDenyList),
+						logger:      ctx.Log(),
 					}
 
 					// This method parses an "asynchronous" error and sends a

@@ -34,7 +34,8 @@ func FilterDeadline(allowed, denied *regexp2.Regexp, s string, deadline time.Tim
 	}
 
 	if denied.String() != "" {
-		deny := regexp2.MustCompile(denied.String(), 0)
+		// URL schemes and hosts are case-insensitive, so the deny list must be too.
+		deny := regexp2.MustCompile(denied.String(), regexp2.IgnoreCase)
 		deny.MatchTimeout = time.Until(deadline)
 
 		ok, err := deny.MatchString(s)
